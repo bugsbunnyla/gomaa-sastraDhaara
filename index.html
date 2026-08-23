@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gomaa - Shastra Dhaara | Repository Workbench</title>
+  <style>
+    :root {
+      --bg: #070a12;
+      --panel: #0f172a;
+      --panel-border: #1e293b;
+      --accent: #38bdf8;
+      --accent-muted: rgba(56, 189, 248, 0.15);
+      --gold: #f59e0b;
+      --gold-muted: rgba(245, 158, 11, 0.15);
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --code-bg: #020617;
+      --success: #22c55e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge {
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      color: #000;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 1.5px;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: var(--accent);
+      margin: 0;
+      font-weight: 500;
+    }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* MAIN WORKSPACE LAYOUT */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR: FILE EXPLORER */
+    .sidebar {
+      width: 280px;
+      background: #0b1120;
+      border-right: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-title {
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--subtext);
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+    .file-tree {
+      list-style: none;
+      margin: 0;
+      padding: 8px 0;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .file-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-family: monospace;
+      color: var(--subtext);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+    .file-item:hover {
+      background: var(--panel-border);
+      color: var(--text);
+    }
+    .file-item.active {
+      background: var(--accent-muted);
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+    }
+    .file-item.folder {
+      font-weight: bold;
+      color: var(--gold);
+      cursor: default;
+    }
+    .file-item.indent-1 { padding-left: 28px; }
+    .file-item.indent-2 { padding-left: 44px; }
+
+    /* CONTENT TABS & VIEWER */
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    .tab-bar {
+      display: flex;
+      background: #0b1120;
+      border-bottom: 1px solid var(--panel-border);
+      overflow-x: auto;
+    }
+    .tab {
+      padding: 10px 18px;
+      font-size: 13px;
+      color: var(--subtext);
+      border-right: 1px solid var(--panel-border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel);
+      user-select: none;
+    }
+    .tab.active {
+      background: var(--bg);
+      color: var(--text);
+      border-top: 2px solid var(--accent);
+    }
+
+    /* PANELS */
+    .view-panel {
+      flex: 1;
+      display: none;
+      overflow: hidden;
+      position: relative;
+    }
+    .view-panel.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* APP INTERACTIVE DEMO */
+    .app-demo {
+      padding: 24px;
+      overflow-y: auto;
+      height: 100%;
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (max-width: 900px) {
+      .demo-grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .card h2 {
+      margin-top: 0;
+      color: var(--gold);
+      font-size: 16px;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 8px;
+    }
+    label {
+      display: block;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--subtext);
+      font-weight: 600;
+    }
+    select {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--panel-border);
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 6px;
+      outline: none;
+    }
+    select:focus {
+      border-color: var(--accent);
+    }
+    
+    /* RADAR / BALANCE GAUGES */
+    .dosha-meters {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .meter-bar {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--panel-border);
+    }
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    .fill-vata { background: #38bdf8; }
+    .fill-pitta { background: #ef4444; }
+    .fill-kapha { background: #22c55e; }
+
+    /* CODE EDITOR / VIEWER */
+    .code-container {
+      flex: 1;
+      overflow: auto;
+      background: var(--code-bg);
+      padding: 16px;
+      margin: 0;
+    }
+    pre code {
+      font-family: "Fira Code", Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 13px;
+      color: #e2e8f0;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    /* BUTTONS */
+    .btn {
+      padding: 10px 16px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s ease;
+    }
+    .btn-accent {
+      background: var(--accent);
+      color: #000;
+    }
+    .btn-accent:hover {
+      background: #7dd3fc;
+    }
+    .btn-gold {
+      background: var(--gold);
+      color: #000;
+    }
+    .btn-gold:hover {
+      background: #fcd34d;
+    }
+
+    .disclaimer-banner {
+      background: var(--gold-muted);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 20px;
+    }
+
+    .result-box {
+      background: var(--bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .result-box h3 {
+      margin: 0 0 8px 0;
+      color: var(--accent);
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header>
+    <div class="brand">
+      <span class="badge">GOMAA</span>
+      <div>
+        <h1 class="title">Shastra Dhaara</h1>
+        <p class="subtitle">Complete Integrated Git Repository & Runtime Workbench</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="download-zip-btn" class="btn btn-gold">
+        <span>📦</span> Export Repository (.zip)
+      </button>
+    </div>
+  </header>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+    <!-- SIDEBAR FILE EXPLORER -->
+    <aside class="sidebar">
+      <div class="sidebar-title">Repository Explorer</div>
+      <ul class="file-tree" id="file-tree">
+        <!-- Injected via JS -->
+      </ul>
+    </aside>
+
+    <!-- CONTENT / EDITOR AREA -->
+    <main class="content-area">
+      <div class="tab-bar">
+        <div class="tab active" data-tab="app-preview">
+          <span>🚀</span> Live Interactive Application
+        </div>
+        <div class="tab" data-tab="code-viewer">
+          <span>📄</span> Source Code Viewer (<span id="active-filename">README.md</span>)
+        </div>
+      </div>
+
+      <!-- VIEW 1: INTERACTIVE APP DEMO -->
+      <div id="app-preview" class="view-panel active">
+        <div class="app-demo">
+          <div class="disclaimer-banner">
+            <strong>Educational Notice:</strong> This workbench models canonical Ayurvedic text decision vectors (Shat Kriya Kala) for algorithmic evaluation. It is strictly an educational tool and not a clinical diagnostic system.
+          </div>
+
+          <div class="demo-grid">
+            <!-- INPUT PANEL -->
+            <div class="card">
+              <h2>Ashtavidha Pariksha Inputs</h2>
+              
+              <label>Drik Pariksha (Ocular Assessment):</label>
+              <select id="input-drik">
+                <option value="normal">Normal / Clear Vision & Eyes</option>
+                <option value="dry_unsteady_eyes">Dry, Unsteady, Dull, Sunken (Vata)</option>
+                <option value="redness_photophobia">Redness, Burning, Photophobia, Yellowing (Pitta)</option>
+                <option value="clear_white_large_lids">White, Clear, Large, Heavy Lids (Kapha)</option>
+              </select>
+
+              <label>Jihva Pariksha (Tongue Assessment):</label>
+              <select id="input-jihva">
+                <option value="normal">Clean, Natural Pink Tone</option>
+                <option value="cracked_dry_blackish_coating">Dry, Cracked, Dark/Blackish Coating (Vata + Ama)</option>
+                <option value="red_yellow_coating_burning">Red Margins, Yellow/Reddish Coating (Pitta + Ama)</option>
+                <option value="thick_white_greasy_coating">Thick, White, Greasy/Slime Coating (Kapha + Ama)</option>
+              </select>
+
+              <label>Agni Assessment (Metabolic State):</label>
+              <select id="input-agni">
+                <option value="samagni">Samagni (Balanced Digestion)</option>
+                <option value="vishamagni">Vishamagni (Irregular / Irritable - Vata)</option>
+                <option value="tikshnagni">Tikshnagni (Hyperactive / Intense - Pitta)</option>
+                <option value="mandagni">Mandagni (Sluggish / Low - Kapha)</option>
+              </select>
+
+              <button id="calc-btn" class="btn btn-accent" style="width: 100%; margin-top: 20px; justify-content: center;">
+                Evaluate Shat Kriya Kala
+              </button>
+            </div>
+
+            <!-- DIAGNOSTIC RESULTS PANEL -->
+            <div class="card">
+              <h2>Diagnostic Output & Dosha Vectors</h2>
+
+              <div class="dosha-meters">
+                <div>
+                  <div class="meter-label"><span>Vata Vector</span><span id="score-vata-val">0%</span></div>
+                  <div class="meter-bar"><div id="score-vata" class="meter-fill fill-vata"></div></div>
+                </div>
+                <div>
+                  <div class="meter-label"><span>Pitta Vector</span><span id="score-pitta-val">0%</span></div>
+                  <div class="meter-bar"><div id="score-pitta" class="meter-fill fill-pitta"></div></div>
+                </div>
+                <div>
+                  <div class="meter-label"><span>Kapha Vector</span><span id="score-kapha-val">0%</span></div>
+                  <div class="meter-bar"><div id="score-kapha" class="meter-fill fill-kapha"></div></div>
+                </div>
+              </div>
+
+              <div id="output" class="result-box">
+                <em>Select observations and click "Evaluate" to calculate the predictive stage progression.</em>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: CODE VIEWER -->
+      <div id="code-viewer" class="view-panel">
+        <div class="code-container">
+          <pre><code id="code-display">// Select a file from the left sidebar tree to inspect source files...</code></pre>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ==================================================================
+    // 1. EMBEDDED COMPLETE GIT REPOSITORY VIRTUAL FILESYSTEM
+    // ==================================================================
+    const REPOSITORY_FILES = [
+      {
+        path: "README.md",
+        name: "README.md",
+        type: "file",
+        content: `# Gomaa - Shastra Dhaara
+
+Canonical Ayurvedic Shat Kriya Kala Model Engine & Interactive Diagnostic Workbench.
+
+## Repository Overview
+This repository provides a zero-dependency, standalone decision engine for evaluating disease stage progression (*Shat Kriya Kala*) based on classical *Ashtavidha Pariksha* observational inputs.
+
+## Structure
+\`\`\`
+gomaa-sastraDhaara/
+├── README.md
+├── index.html
+└── content/
+    └── models/
+        ├── kriyakala.json
+        └── pariksha_rules.json
+\`\`\`
+
+## Key Features
+- **Deterministic Rules Engine:** Maps ocular, tongue, and digestive parameters to Dosha vectors.
+- **Client-Side ZIP Generator:** Pure binary array zip compiler executing directly in the browser.
+`
+      },
+      {
+        path: "index.html",
+        name: "index.html",
+        type: "file",
+        content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gomaa - Shastra Dhaara Standalone App</title>
+</head>
+<body>
+  <h1>Gomaa Shastra Dhaara Engine</h1>
+  <p>Refer to workbench code for runtime initialization.</p>
+</body>
+</html>`
+      },
+      {
+        path: "content/models/kriyakala.json",
+        name: "kriyakala.json",
+        type: "file",
+        content: JSON.stringify({
+          "stages": [
+            { "stage": 1, "name": "Sanchaya", "desc": "Accumulation of Dosha in natural physiological sites.", "principle": "Hetu Viparita (Eliminate primary provoking factors)" },
+            { "stage": 2, "name": "Prakopa", "desc": "Excitation and liquidity increase, preparing for overflow.", "principle": "Pacification (Shamana therapies)" },
+            { "stage": 3, "name": "Prasara", "desc": "Overflow/Circulation throughout Srotas (micro-channels).", "principle": "Systemic purification and early intervention" },
+            { "stage": 4, "name": "Sthana Samshraya", "desc": "Localization in vulnerable tissues (Prodromal stage).", "principle": "Targeted Dhatu protection & Shodhana" },
+            { "stage": 5, "name": "Vyakti", "desc": "Full manifestation of distinct clinical disease signs.", "principle": "Disease-specific treatment protocols" },
+            { "stage": 6, "name": "Bheda", "desc": "Chronic complications or permanent structural damage.", "principle": "Long-term management & Rasayana rejuvenation" }
+          ]
+        }, null, 2)
+      },
+      {
+        path: "content/models/pariksha_rules.json",
+        name: "pariksha_rules.json",
+        type: "file",
+        content: JSON.stringify({
+          "drik": {
+            "dry_unsteady_eyes": { "dosha": "vata", "weight": 25 },
+            "redness_photophobia": { "dosha": "pitta", "weight": 25 },
+            "clear_white_large_lids": { "dosha": "kapha", "weight": 25 }
+          },
+          "jihva": {
+            "cracked_dry_blackish_coating": { "dosha": "vata", "ama": true, "weight": 35 },
+            "red_yellow_coating_burning": { "dosha": "pitta", "ama": true, "weight": 35 },
+            "thick_white_greasy_coating": { "dosha": "kapha", "ama": true, "weight": 35 }
+          },
+          "agni": {
+            "vishamagni": { "dosha": "vata", "weight": 40 },
+            "tikshnagni": { "dosha": "pitta", "weight": 40 },
+            "mandagni": { "dosha": "kapha", "weight": 40 }
+          }
+        }, null, 2)
+      }
+    ];
+
+    // ==================================================================
+    // 2. DIAGNOSTIC CALCULATION ENGINE WITH LIVE METERS
+    // ==================================================================
+    function runEvaluation() {
+      const drik = document.getElementById('input-drik').value;
+      const jihva = document.getElementById('input-jihva').value;
+      const agni = document.getElementById('input-agni').value;
+
+      const rules = JSON.parse(REPOSITORY_FILES.find(f => f.path === "content/models/pariksha_rules.json").content);
+      const kriyakala = JSON.parse(REPOSITORY_FILES.find(f => f.path === "content/models/kriyakala.json").content);
+
+      let scores = { vata: 0, pitta: 0, kapha: 0 };
+      let amaPresent = false;
+
+      // Calculate rule weights
+      if (rules.drik[drik]) scores[rules.drik[drik].dosha] += rules.drik[drik].weight;
+      
+      if (rules.jihva[jihva]) {
+        scores[rules.jihva[jihva].dosha] += rules.jihva[jihva].weight;
+        if (rules.jihva[jihva].ama) amaPresent = true;
+      }
+
+      if (rules.agni[agni]) scores[rules.agni[agni].dosha] += rules.agni[agni].weight;
+
+      // Normalize scores for vector display
+      const total = scores.vata + scores.pitta + scores.kapha || 1;
+      const vataPct = Math.round((scores.vata / total) * 100);
+      const pittaPct = Math.round((scores.pitta / total) * 100);
+      const kaphaPct = Math.round((scores.kapha / total) * 100);
+
+      // Update UI Meters
+      document.getElementById('score-vata').style.width = vataPct + '%';
+      document.getElementById('score-vata-val').textContent = vataPct + '%';
+      document.getElementById('score-pitta').style.width = pittaPct + '%';
+      document.getElementById('score-pitta-val').textContent = pittaPct + '%';
+      document.getElementById('score-kapha').style.width = kaphaPct + '%';
+      document.getElementById('score-kapha-val').textContent = kaphaPct + '%';
+
+      // Determine Shat Kriya Kala Stage
+      let stageIdx = 0;
+      if (total > 80) stageIdx = 3; // Sthana Samshraya
+      else if (total > 50) stageIdx = 2; // Prasara
+      else if (total > 25) stageIdx = 1; // Prakopa
+      else stageIdx = 0; // Sanchaya
+
+      const stageInfo = kriyakala.stages[stageIdx];
+      
+      let dominant = "Balanced";
+      if (scores.vata >= scores.pitta && scores.vata >= scores.kapha && scores.vata > 0) dominant = "Vata Dominant";
+      else if (scores.pitta >= scores.vata && scores.pitta >= scores.kapha && scores.pitta > 0) dominant = "Pitta Dominant";
+      else if (scores.kapha > 0) dominant = "Kapha Dominant";
+
+      document.getElementById('output').innerHTML = `
+        <h3>Calculated Stage: Stage ${stageInfo.stage} (${stageInfo.name})</h3>
+        <p><strong>Vector State:</strong> ${dominant} | <strong>Ama Accumulation:</strong> ${amaPresent ? '<span style="color:#ef4444">Detected</span>' : 'None'}</p>
+        <p><strong>Clinical Manifestation:</strong> ${stageInfo.desc}</p>
+        <p><strong>Therapeutic Vector:</strong> ${stageInfo.principle}</p>
+      `;
+    }
+
+    // ==================================================================
+    // 3. ZERO-DEPENDENCY BINARY ZIP COMPILER
+    // ==================================================================
+    function crc32(str) {
+      let table = new Uint32Array(256);
+      for (let i = 0; i < 256; i++) {
+        let c = i;
+        for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        table[i] = c;
+      }
+      let crc = 0xFFFFFFFF;
+      const bytes = new TextEncoder().encode(str);
+      for (let i = 0; i < bytes.length; i++) {
+        crc = (crc >>> 8) ^ table[(crc ^ bytes[i]) & 0xFF];
+      }
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    function createRepositoryZip() {
+      let fileHeaders = [];
+      let centralHeaders = [];
+      let offset = 0;
+
+      // Add full document source as primary file
+      const documentSource = document.documentElement.outerHTML;
+      const zipFiles = [
+        ...REPOSITORY_FILES,
+        { path: "workbench_full_source.html", content: documentSource }
+      ];
+
+      zipFiles.forEach(file => {
+        const encoder = new TextEncoder();
+        const fileData = encoder.encode(file.content);
+        const fileNameBytes = encoder.encode(file.path);
+        const crc = crc32(file.content);
+        const size = fileData.length;
+
+        // Local Header
+        const localHeader = new Uint8Array(30 + fileNameBytes.length + size);
+        const view = new DataView(localHeader.buffer);
+        view.setUint32(0, 0x04034b50, true);
+        view.setUint16(4, 20, true);
+        view.setUint16(6, 0, true);
+        view.setUint16(8, 0, true);
+        view.setUint16(10, 0, true);
+        view.setUint16(12, 0, true);
+        view.setUint32(14, crc, true);
+        view.setUint32(18, size, true);
+        view.setUint32(22, size, true);
+        view.setUint16(26, fileNameBytes.length, true);
+        view.setUint16(28, 0, true);
+        localHeader.set(fileNameBytes, 30);
+        localHeader.set(fileData, 30 + fileNameBytes.length);
+
+        fileHeaders.push(localHeader);
+
+        // Central Directory Header
+        const cdHeader = new Uint8Array(46 + fileNameBytes.length);
+        const cdView = new DataView(cdHeader.buffer);
+        cdView.setUint32(0, 0x02014b50, true);
+        cdView.setUint16(4, 20, true);
+        cdView.setUint16(6, 20, true);
+        cdView.setUint16(8, 0, true);
+        cdView.setUint16(10, 0, true);
+        cdView.setUint16(12, 0, true);
+        cdView.setUint16(14, 0, true);
+        cdView.setUint32(16, crc, true);
+        cdView.setUint32(20, size, true);
+        cdView.setUint32(24, size, true);
+        cdView.setUint16(28, fileNameBytes.length, true);
+        cdView.setUint16(30, 0, true);
+        cdView.setUint16(32, 0, true);
+        cdView.setUint16(34, 0, true);
+        cdView.setUint16(36, 0, true);
+        cdView.setUint32(38, 0, true);
+        cdView.setUint32(42, offset, true);
+        cdHeader.set(fileNameBytes, 46);
+
+        centralHeaders.push(cdHeader);
+        offset += localHeader.length;
+      });
+
+      const cdOffset = offset;
+      let cdSize = 0;
+      centralHeaders.forEach(h => cdSize += h.length);
+
+      // End of Central Directory
+      const eocd = new Uint8Array(22);
+      const eocdView = new DataView(eocd.buffer);
+      eocdView.setUint32(0, 0x06054b50, true);
+      eocdView.setUint16(4, 0, true);
+      eocdView.setUint16(6, 0, true);
+      eocdView.setUint16(8, zipFiles.length, true);
+      eocdView.setUint16(10, zipFiles.length, true);
+      eocdView.setUint32(12, cdSize, true);
+      eocdView.setUint32(16, cdOffset, true);
+      eocdView.setUint16(20, 0, true);
+
+      const allParts = [...fileHeaders, ...centralHeaders, eocd];
+      const totalLen = allParts.reduce((acc, p) => acc + p.length, 0);
+      const zipBuffer = new Uint8Array(totalLen);
+      let pos = 0;
+      allParts.forEach(part => {
+        zipBuffer.set(part, pos);
+        pos += part.length;
+      });
+
+      const zipBlob = new Blob([zipBuffer], { type: "application/zip" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = "gomaa-sastraDhaara-repo.zip";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    // ==================================================================
+    // 4. UI INTERACTION HANDLERS
+    // ==================================================================
+    function renderFileTree() {
+      const treeContainer = document.getElementById('file-tree');
+      treeContainer.innerHTML = '';
+
+      // Hardcoded tree hierarchy rendering for clean UI
+      const structure = [
+        { path: "README.md", label: "📄 README.md", indent: "" },
+        { path: "index.html", label: "📄 index.html", indent: "" },
+        { folder: true, label: "📁 content", indent: "" },
+        { folder: true, label: "📁 models", indent: "indent-1" },
+        { path: "content/models/kriyakala.json", label: "⚙️ kriyakala.json", indent: "indent-2" },
+        { path: "content/models/pariksha_rules.json", label: "⚙️ pariksha_rules.json", indent: "indent-2" }
+      ];
+
+      structure.forEach(item => {
+        const li = document.createElement('li');
+        li.className = `file-item ${item.folder ? 'folder' : ''} ${item.indent}`;
+        li.textContent = item.label;
+
+        if (!item.folder) {
+          li.addEventListener('click', () => {
+            document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+            li.classList.add('active');
+            openFile(item.path);
+          });
+        }
+        treeContainer.appendChild(li);
+      });
+    }
+
+    function openFile(filePath) {
+      const file = REPOSITORY_FILES.find(f => f.path === filePath);
+      if (!file) return;
+
+      document.getElementById('active-filename').textContent = file.name;
+      document.getElementById('code-display').textContent = file.content;
+
+      // Switch tab to code viewer
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+
+      const codeTab = document.querySelector('[data-tab="code-viewer"]');
+      const codePanel = document.getElementById('code-viewer');
+      codeTab.classList.add('active');
+      codePanel.classList.add('active');
+    }
+
+    // TAB SWITCHING
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-tab');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+
+        tab.classList.add('active');
+        document.getElementById(target).classList.add('active');
+      });
+    });
+
+    // INIT EVENT LISTENERS
+    document.addEventListener('DOMContentLoaded', () => {
+      renderFileTree();
+      document.getElementById('calc-btn').addEventListener('click', runEvaluation);
+      document.getElementById('download-zip-btn').addEventListener('click', createRepositoryZip);
+      
+      // Auto-open README in code viewer default
+      const defaultFile = REPOSITORY_FILES[0];
+      document.getElementById('code-display').textContent = defaultFile.content;
+    });
+  </script>
+</body>
+</html>
