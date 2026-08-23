@@ -691,7 +691,7 @@ gomaa-sastraDhaara/
       
       const processingOption = document.getElementById('input-processing-options').value;
       let radiusInput = document.getElementById('input-spatial-radius').value;
-      const radiusFeet = radiusInput ? parseFloat(radiusInput) : 10; // Default 10 feet if not set
+      const radiusFeet = radiusInput ? parseFloat(radiusInput) : 10;
       if (!radiusInput) document.getElementById('input-spatial-radius').value = 10;
 
       document.getElementById('hud-radius-label').textContent = `Radius: ${radiusFeet} ft`;
@@ -914,7 +914,7 @@ gomaa-sastraDhaara/
       codePanel.classList.add('active');
     }
 
-    // TAB SWITCHING
+    // TAB SWITCHING HANDLERS
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         const target = tab.getAttribute('data-tab');
@@ -923,25 +923,16 @@ gomaa-sastraDhaara/
 
         tab.classList.add('active');
         document.getElementById(target).classList.add('active');
-
-        if (target === 'app-preview') {
-          drawSpatialHUD(parseFloat(document.getElementById('input-spatial-radius').value) || 10, document.getElementById('input-processing-options').value);
-        }
       });
     });
 
-    // INIT EVENT LISTENERS
-    document.addEventListener('DOMContentLoaded', () => {
-      renderFileTree();
-      document.getElementById('calc-btn').addEventListener('click', runEvaluation);
-      document.getElementById('download-zip-btn').addEventListener('click', createRepositoryZip);
-      
-      const defaultFile = REPOSITORY_FILES[0];
-      document.getElementById('code-display').textContent = defaultFile.content;
+    // BIND BUTTON EVENT LISTENERS
+    document.getElementById('calc-btn').addEventListener('click', runEvaluation);
+    document.getElementById('download-zip-btn').addEventListener('click', createRepositoryZip);
 
-      // Draw initial HUD
-      drawSpatialHUD(10, 'all_included');
-    });
+    // INITIAL RENDER
+    renderFileTree();
+    runEvaluation();
   </script>
 </body>
 </html>
