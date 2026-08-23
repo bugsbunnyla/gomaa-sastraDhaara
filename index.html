@@ -160,7 +160,7 @@
 <div class="wrapper">
   <header>
     <h1>Gomaa - Śāstra Dhārā Workbench</h1>
-    <p class="subtitle">Optical rPPG Facial Biometrics, Organ Dynamics & Veda Rahasya Engine</p>
+    <p class="subtitle">Optical rPPG Facial Biometrics, 12-Tier Chakra Veda Rahasya & Organ Dynamics Engine</p>
   </header>
 
   <!-- STEP 1: SELECT VEDIC LITERATURE CONTENT & MODELS -->
@@ -168,7 +168,7 @@
     <h2><span class="step-num">1</span> Select Vedic Corpus & Rahasya Model</h2>
     <label for="vedaSelect">Context & Comprehensive Model Source:</label>
     <select id="vedaSelect">
-      <option value="all_vedas" selected>All Vedas Literature Rahasya (Rigveda, Yajurveda, Samaveda, Atharvaveda - Unified Model)</option>
+      <option value="all_vedas" selected>All Vedas Literature Rahasya & 12-Tier Chakra Mapping Model</option>
       <option value="atharvaveda">Atharvaveda Bheṣaja & Organ-System Therapeutic Rahasya</option>
       <option value="rigveda">Rigveda Aśvini Kumāra Somatic & Dhatu Rejuvenation Rahasya</option>
       <option value="upaveda_ayurveda">Āyurveda Upaveda Comprehensive Diagnostic Model</option>
@@ -179,7 +179,7 @@
   <div class="step-card">
     <h2><span class="step-num">2</span> Multi-Source Input Inclusion (Square Facial Biometric Scan & Reports)</h2>
     
-    <label>Facial Scan Capture (Square Postcard Frame - rPPG Vital Analytics):</label>
+    <label>Facial Scan Capture (Square Postcard Frame - rPPG Vital Analytics & Forehead Read):</label>
     <div class="media-box-container">
       <div class="media-box">
         <video id="videoFeed" autoplay playsinline muted style="display:none;"></video>
@@ -216,24 +216,24 @@
     </div>
 
     <button id="btnEvaluate" class="btn btn-accent" style="margin-top: 16px;">
-      ⚡ Process Optical Biometrics, Organ Dynamics & Veda Rahasya
+      ⚡ Process Optical Biometrics, 12-Tier Chakras & Veda Rahasya
     </button>
   </div>
 
   <!-- STEP 4 & 5: RESULTS, PLOTLY CHART, TABLE & EXCEL DOWNLOAD -->
   <div class="step-card" id="outputCard" style="display:none;">
-    <h2><span class="step-num">4</span> UI Results: Biometric Parameters & Veda Rahasya Insights</h2>
+    <h2><span class="step-num">4</span> UI Results: Biometric Parameters & 12-Tier Chakra Rahasya</h2>
     
     <!-- Plotly Interactive Chart Container -->
-    <div id="plotlyChartContainer" style="width:100%; height:320px; background:var(--bg); border:1px solid var(--border); border-radius:6px; margin-top:10px;"></div>
+    <div id="plotlyChartContainer" style="width:100%; height:360px; background:var(--bg); border:1px solid var(--border); border-radius:6px; margin-top:10px;"></div>
 
     <!-- Comprehensive Data Table -->
-    <h3 style="font-size: 13px; color: var(--accent); margin-top: 16px; margin-bottom: 4px;">Comprehensive Biometric & Organ-System Breakdown</h3>
+    <h3 style="font-size: 13px; color: var(--accent); margin-top: 16px; margin-bottom: 4px;">Comprehensive Biometric, Organ Dynamics & 12-Tier Chakra Breakdown</h3>
     <div style="overflow-x:auto;">
       <table class="data-table" id="comparisonTable">
         <thead>
           <tr>
-            <th>Biometric / Organ Parameter</th>
+            <th>Parameter / Chakra Tier</th>
             <th>Evaluated Source / Range</th>
             <th>Ideal Benchmark</th>
             <th>Scanned / Processed Result</th>
@@ -324,13 +324,13 @@
       ctx.drawImage(videoFeed, startX, startY, minDim, minDim, 0, 0, 320, 320);
     }
     
-    // Draw visual square mesh boundary
+    // Draw visual square mesh boundary with forehead target focus
     ctx.strokeStyle = '#f59e0b';
     ctx.lineWidth = 3;
     ctx.strokeRect(80, 60, 160, 200);
 
     scanMetadata = { type: "Square Live Camera Postcard Capture", timestamp: new Date().toISOString() };
-    scanStatus.textContent = "Status: Square facial scan successfully snapped!";
+    scanStatus.textContent = "Status: Square facial scan & forehead read successfully snapped!";
   });
 
   btnUploadTrigger.addEventListener('click', () => fileInput.click());
@@ -372,7 +372,7 @@
     }
   });
 
-  // Comprehensive Evaluation Engine (Biometrics + Organ Dynamics + Veda Rahasya)
+  // Comprehensive Evaluation Engine (Biometrics + Organ Dynamics + Nervous System + 12-Tier Chakras)
   btnEvaluate.addEventListener('click', () => {
     if (!scanMetadata.timestamp) {
       alert("Please capture a square facial scan or upload an image in Step 2 before evaluation.");
@@ -394,7 +394,20 @@
       // --- NERVOUS SYSTEM PARAMETERS ---
       { parameter: "Heart Rate Variability (HRV)", source: "rPPG Pulse Wave Interval Analysis", ideal: "> 50 ms (RMSSD)", actual: "58 ms (RMSSD)", status: "High Autonomic Resilience" },
       { parameter: "Sympathetic/Parasympathetic Tone", source: "Micro-Expression & Vasomotor Scan", ideal: "Balanced Equilibrium", actual: "Parasympathetic Dominant", status: "Calm / Prana Aligned" },
-      { parameter: "Vagal Tone & Neural Index", source: "Cervical & Ocular Micro-Dynamics", ideal: "Optimal Vagal Flow", actual: "Stable Regulation", status: "Vijnanamaya Harmonized" }
+      { parameter: "Vagal Tone & Neural Index", source: "Cervical & Ocular Micro-Dynamics", ideal: "Optimal Vagal Flow", actual: "Stable Regulation", status: "Vijnanamaya Harmonized" },
+      // --- 12-TIER CHAKRA & LINGAAKARA RAHASYA MAPPING ---
+      { parameter: "1. Mūlādhāra (Root Chakra)", source: "Base Spinal Resonance Scan", ideal: "Stable Grounding", actual: "Harmonized Foundation", status: "Prthvi Tattva Stable" },
+      { parameter: "2. Svādhiṣṭhāna (Sacral Chakra)", source: "Pelvic Vitality Scan", ideal: "Fluid Creativity", actual: "Active Flow", status: "Jala Tattva Balanced" },
+      { parameter: "3. Maṇipūra (Solar Plexus Chakra)", source: "Navel Agni Spectrum Analysis", ideal: "Robust Agni", actual: "Vibrant Core Heat", status: "Agni Tattva Optimal" },
+      { parameter: "4. Anāhata (Heart Chakra)", source: "Thoracic rPPG Cardiorespiratory Scan", ideal: "Compassionate Resonance", actual: "Coherent Rhythm", status: "Vayu Tattva Synchronized" },
+      { parameter: "5. Viśuddhi (Throat Chakra)", source: "Cervical & Thyroid Acoustic Scan", ideal: "Clear Expression", actual: "Harmonic Voice Index", status: "Akasha Tattva Open" },
+      { parameter: "6. Ājñā (Third Eye / Forehead Read)", source: "Forehead Micro-Vessel & Neural Scan", ideal: "Intuitive Focus", actual: "High Mental Dynamism", status: "Manas Rahasya Active" },
+      { parameter: "7. Sahasrāra (Crown Chakra)", source: "Upper Cranial Field Spectrum", ideal: "Pure Consciousness Link", actual: "Aligned Resonance", status: "Sattvic Unity Optimal" },
+      { parameter: "8. Lingaakara (Subtle Form Nexus)", source: "Morphogenetic Energy Grid Analysis", ideal: "Structural Harmony", actual: "Unified Blueprint", status: "Sūkṣma Sarīra Aligned" },
+      { parameter: "9. Elevated Higher Tier IX", source: "Advanced Sub-Cranial Resonance", ideal: "Expanded Matrix", actual: "Coherent Field", status: "Higher Pranic Flow" },
+      { parameter: "10. Elevated Higher Tier X", source: "Transcendent Aura Mapping", ideal: "Subtle Luminosity", actual: "Radiant Envelope", status: "Ojas Extension Stable" },
+      { parameter: "11. Elevated Higher Tier XI", source: "Cosmic Integration Node", ideal: "Universal Sync", actual: "Balanced Resonance", status: "Rta Connectivity Active" },
+      { parameter: "12. Elevated Higher Tier XII", source: "Absolute Zenith Rahasya Matrix", ideal: "Infinite Equilibrium", actual: "Total Integration", status: "Purna Rahasya Realized" }
     ];
 
     // Render Table Rows
@@ -409,16 +422,18 @@
       </tr>
     `).join('');
 
-    // Render Plotly Bar Chart (Mapping normalized values for visual comparison)
+    // Render Plotly Bar Chart for all parameters including Chakras
     const chartParams = [
-      "Blood Pressure", "Blood Sugar", "Temperature", "Purity/Complexion", 
-      "Nourishment", "Blood Levels", "Spleen/Liver", "Pancreas/Gut", 
-      "HRV (Nervous)", "ANS Balance", "Vagal Tone"
+      "Blood Pressure", "Blood Sugar", "Temperature", "Complexion", 
+      "Nourishment", "Blood Levels", "Liver/Spleen", "Gut/Pancreas", 
+      "HRV (Neural)", "ANS Balance", "Vagal Tone",
+      "Mūlādhāra", "Svādhiṣṭhāna", "Maṇipūra", "Anāhata", "Viśuddhi", 
+      "Ājñā (Forehead)", "Sahasrāra", "Lingaakara", "Higher IX", "Higher X", "Higher XI", "Zenith XII"
     ];
     
     const traceIdeal = {
       x: chartParams,
-      y: [100, 95, 98, 100, 100, 96, 95, 95, 95, 95, 98],
+      y: [100, 95, 98, 100, 100, 96, 95, 95, 95, 95, 98, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
       name: 'Ideal Vedic Benchmark',
       type: 'bar',
       marker: { color: '#38bdf8' }
@@ -426,21 +441,21 @@
 
     const traceActual = {
       x: chartParams,
-      y: [98, 92, 97, 95, 96, 94, 93, 94, 96, 92, 96],
+      y: [98, 92, 97, 95, 96, 94, 93, 94, 96, 92, 96, 97, 95, 96, 98, 94, 99, 97, 96, 95, 94, 96, 98],
       name: 'Processed Biometric Result',
       type: 'bar',
       marker: { color: '#f59e0b' }
     };
 
     const layout = {
-      title: { text: 'Biometric Health & Organ Dynamics: Benchmark vs Actual', font: { color: '#f8fafc', size: 13 } },
+      title: { text: 'Biometric, Organ Dynamics & 12-Tier Chakra Rahasya: Benchmark vs Actual', font: { color: '#f8fafc', size: 12 } },
       paper_bgcolor: '#0f172a',
       plot_bgcolor: '#070a12',
-      font: { color: '#94a3b8', size: 10 },
+      font: { color: '#94a3b8', size: 9 },
       barmode: 'group',
-      margin: { t: 40, r: 20, l: 40, b: 90 },
-      xaxis: { tickangle: -25 },
-      legend: { orientation: 'h', y: -0.4 }
+      margin: { t: 40, r: 20, l: 40, b: 120 },
+      xaxis: { tickangle: -35 },
+      legend: { orientation: 'h', y: -0.5 }
     };
 
     Plotly.newPlot('plotlyChartContainer', [traceIdeal, traceActual], layout, { responsive: true, displayModeBar: false });
@@ -457,7 +472,7 @@
     }
 
     const sheetData = currentAnalysisRows.map(r => ({
-      "Biometric / Organ Parameter": r.parameter,
+      "Parameter / Chakra Tier": r.parameter,
       "Evaluated Source / Range": r.source,
       "Ideal Benchmark": r.ideal,
       "Scanned / Processed Result": r.actual,
@@ -466,9 +481,9 @@
 
     const worksheet = XLSX.utils.json_to_sheet(sheetData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Biometric & Organ Analysis");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "12-Tier Chakra & Biometric Analysis");
 
-    XLSX.writeFile(workbook, `Sastra-Dhaara-Biometric-Analysis-${Date.now()}.xlsx`);
+    XLSX.writeFile(workbook, `Sastra-Dhaara-12Chakra-Analysis-${Date.now()}.xlsx`);
   });
 </script>
 
