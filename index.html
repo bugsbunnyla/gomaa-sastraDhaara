@@ -7,7 +7,7 @@
   
   <!-- Plotly.js for Interactive Charts -->
   <script src="https://cdn.plot.ly/plotly-3.7.0.min.js" charset="utf-8"></script>
-  <!-- SheetJS (xlsx) for Excel Workbook Generation -->
+  <!-- SheetJS (xlsx) for Native Excel Workbook Generation -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" charset="utf-8"></script>
 
   <style>
@@ -35,7 +35,7 @@
       min-height: 100vh;
     }
     .wrapper {
-      max-width: 1000px;
+      max-width: 900px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -109,18 +109,23 @@
     .btn-success:hover { background: var(--success-hover); }
     .btn-secondary { background: #334155; color: #fff; flex: 1; }
 
+    /* Enforces a Square Postcard Aspect Ratio (1:1) */
+    .media-box-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 8px;
+    }
     .media-box {
       position: relative;
-      width: 100%;
-      height: 220px;
+      width: 300px;
+      height: 300px;
       background: #000;
-      border-radius: 6px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 8px;
     }
     video, canvas, img {
       position: absolute;
@@ -168,14 +173,16 @@
     </select>
   </div>
 
-  <!-- STEP 2: CAPTURE OR UPLOAD FACIAL SCAN -->
+  <!-- STEP 2: CAPTURE OR UPLOAD FACIAL SCAN (SQUARE POSTCARD SIZE) -->
   <div class="step-card">
-    <h2><span class="step-num">2</span> Facial Scan Capture Input</h2>
-    <div class="media-box">
-      <video id="videoFeed" autoplay playsinline muted style="display:none;"></video>
-      <img id="imagePreview" style="display:none;" alt="Uploaded Scan Preview" />
-      <canvas id="overlayCanvas"></canvas>
-      <div id="placeholderText" style="color: var(--subtext); font-size: 13px; z-index: 2;">Awaiting Camera or Upload...</div>
+    <h2><span class="step-num">2</span> Facial Scan Capture Input (Square Postcard Frame)</h2>
+    <div class="media-box-container">
+      <div class="media-box">
+        <video id="videoFeed" autoplay playsinline muted style="display:none;"></video>
+        <img id="imagePreview" style="display:none;" alt="Uploaded Scan Preview" />
+        <canvas id="overlayCanvas"></canvas>
+        <div id="placeholderText" style="color: var(--subtext); font-size: 12px; z-index: 2; text-align: center; padding: 10px;">Awaiting Camera or Upload...</div>
+      </div>
     </div>
 
     <div style="display: flex; gap: 8px; margin-top: 10px;">
@@ -260,7 +267,7 @@
   let scanMetadata = { status: "Pending", timestamp: null };
   let currentKoshaMetrics = [];
 
-  // Step 2: Camera & Upload handlers
+  // Step 2: Camera & Upload handlers with Square Sizing (300x300)
   btnStartCam.addEventListener('click', async () => {
     try {
       if (activeStream) {
@@ -273,37 +280,47 @@
         return;
       }
 
-      activeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      activeStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: { ideal: 300 }, height: { ideal: 300 }, facingMode: 'user' }, 
+        audio: false 
+      });
       videoFeed.srcObject = activeStream;
       videoFeed.style.display = 'block';
       imagePreview.style.display = 'none';
       placeholderText.style.display = 'none';
 
-      videoFeed.onloadedmetadata = () => {
-        overlayCanvas.width = videoFeed.videoWidth || 320;
-        overlayCanvas.height = videoFeed.videoHeight || 240;
-      };
+      overlayCanvas.width = 300;
+      overlayCanvas.height = 300;
 
       btnStartCam.textContent = "🛑 Stop Camera";
       btnCapture.disabled = false;
-      scanStatus.textContent = "Status: Live camera feed active. Ready to snap scan capture.";
+      scanStatus.textContent = "Status: Live square camera feed active. Ready to snap scan capture.";
     } catch (err) {
       alert("Camera access error: " + err.message);
     }
   });
 
   btnCapture.addEventListener('click', () => {
-    if (!videoFeed.videoWidth) return;
-    overlayCanvas.width = videoFeed.videoWidth;
-    overlayCanvas.height = videoFeed.videoHeight;
-    ctx.drawImage(videoFeed, 0, 0, overlayCanvas.width, overlayCanvas.height);
+    overlayCanvas.width = 300;
+    overlayCanvas.height = 300;
     
+    // Draw centered square capture from video feed
+    if (videoFeed.readyState >= 2) {
+      const vW = videoFeed.videoWidth;
+      const vH = videoFeed.videoHeight;
+      const minDim = Math.min(vW, vH);
+      const startX = (vW - minDim) / 2;
+      const startY = (vH - minDim) / 2;
+      ctx.drawImage(videoFeed, startX, startY, minDim, minDim, 0, 0, 300, 300);
+    }
+    
+    // Draw visual scan mesh marker
     ctx.strokeStyle = '#f59e0b';
     ctx.lineWidth = 3;
-    ctx.strokeRect(overlayCanvas.width * 0.25, overlayCanvas.height * 0.2, overlayCanvas.width * 0.5, overlayCanvas.height * 0.6);
+    ctx.strokeRect(75, 60, 150, 180);
 
-    scanMetadata = { type: "Live Camera Snap Capture", timestamp: new Date().toISOString() };
-    scanStatus.textContent = "Status: Facial scan successfully snapped and captured!";
+    scanMetadata = { type: "Live Camera Square Snap Capture", timestamp: new Date().toISOString() };
+    scanStatus.textContent = "Status: Facial postcard scan successfully snapped and captured!";
   });
 
   btnUploadTrigger.addEventListener('click', () => fileInput.click());
@@ -324,16 +341,16 @@
         imagePreview.src = event.target.result;
         imagePreview.style.display = 'block';
         imagePreview.onload = () => {
-          overlayCanvas.width = imagePreview.clientWidth;
-          overlayCanvas.height = imagePreview.clientHeight;
+          overlayCanvas.width = 300;
+          overlayCanvas.height = 300;
           ctx.strokeStyle = '#f59e0b';
           ctx.lineWidth = 3;
-          ctx.strokeRect(overlayCanvas.width * 0.25, overlayCanvas.height * 0.2, overlayCanvas.width * 0.5, overlayCanvas.height * 0.6);
+          ctx.strokeRect(75, 60, 150, 180);
         };
       };
       reader.readAsDataURL(file);
       scanMetadata = { type: "Uploaded Scan File (" + file.name + ")", timestamp: new Date().toISOString() };
-      scanStatus.textContent = "Status: Facial scan file loaded successfully.";
+      scanStatus.textContent = "Status: Facial postcard scan file loaded successfully.";
     }
   });
 
@@ -397,14 +414,13 @@
     document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth' });
   });
 
-  // Step 5: Download XLSX Workbook using SheetJS
+  // Step 5: Download XLSX Spreadsheet Workbook using SheetJS
   btnDownloadXlsx.addEventListener('click', () => {
     if (currentKoshaMetrics.length === 0) {
       alert("Please run an evaluation first.");
       return;
     }
 
-    // Map table data into spreadsheet format rows
     const sheetData = currentKoshaMetrics.map(k => ({
       "Kosha Layer": k.layer,
       "Vedic Domain Focus": k.focus,
@@ -413,12 +429,10 @@
       "Variance / Status": k.status
     }));
 
-    // Create SheetJS workbook and worksheet
     const worksheet = XLSX.utils.json_to_sheet(sheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Pancakosha Analysis");
 
-    // Trigger local Excel file download
     XLSX.writeFile(workbook, `Sastra-Dhaara-Kosha-Analysis-${Date.now()}.xlsx`);
   });
 </script>
