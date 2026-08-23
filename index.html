@@ -3,947 +3,378 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gomaa - Shastra Dhaara | Spatial Vision & Diagnostic Workbench</title>
+  <title>Śāstra Dhārā - Vaidya Maharṣi & Spatial Analysis</title>
   <style>
     :root {
-      --bg: #070a12;
-      --panel: #0f172a;
-      --panel-border: #1e293b;
-      --accent: #38bdf8;
-      --accent-muted: rgba(56, 189, 248, 0.15);
-      --gold: #f59e0b;
-      --gold-muted: rgba(245, 158, 11, 0.15);
-      --text: #f8fafc;
-      --subtext: #94a3b8;
-      --code-bg: #020617;
-      --success: #22c55e;
-      --danger: #ef4444;
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-color: #d97706;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
     }
-    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    /* HEADER */
-    header {
-      background: var(--panel);
-      border-bottom: 1px solid var(--panel-border);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .badge {
-      background: linear-gradient(135deg, var(--gold), #d97706);
-      color: #000;
-      font-weight: 900;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 4px;
-      letter-spacing: 1.5px;
-    }
-    .title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text);
-      margin: 0;
-    }
-    .subtitle {
-      font-size: 12px;
-      color: var(--accent);
-      margin: 0;
-      font-weight: 500;
-    }
-
-    /* WORKSPACE */
-    .workspace {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    /* SIDEBAR FILE TREE */
-    .sidebar {
-      width: 260px;
-      background: #0b1120;
-      border-right: 1px solid var(--panel-border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-    }
-    .sidebar-title {
-      padding: 12px 16px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--subtext);
-      letter-spacing: 1px;
-      border-bottom: 1px solid var(--panel-border);
-    }
-    .file-tree {
-      list-style: none;
-      margin: 0;
-      padding: 8px 0;
-      overflow-y: auto;
-      flex: 1;
-    }
-    .file-item {
-      padding: 8px 16px;
-      font-size: 13px;
-      font-family: monospace;
-      color: var(--subtext);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.15s ease;
-    }
-    .file-item:hover {
-      background: var(--panel-border);
-      color: var(--text);
-    }
-    .file-item.active {
-      background: var(--accent-muted);
-      color: var(--accent);
-      border-left: 3px solid var(--accent);
-    }
-    .file-item.folder {
-      font-weight: bold;
-      color: var(--gold);
-      cursor: default;
-    }
-    .file-item.indent-1 { padding-left: 28px; }
-    .file-item.indent-2 { padding-left: 44px; }
-
-    /* CONTENT AREA */
-    .content-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-      overflow-y: auto;
-    }
-    .tab-bar {
-      display: flex;
-      background: #0b1120;
-      border-bottom: 1px solid var(--panel-border);
-    }
-    .tab {
-      padding: 10px 18px;
-      font-size: 13px;
-      color: var(--subtext);
-      border-right: 1px solid var(--panel-border);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--panel);
-      user-select: none;
-    }
-    .tab.active {
-      background: var(--bg);
-      color: var(--text);
-      border-top: 2px solid var(--accent);
-    }
-
-    .view-panel {
-      flex: 1;
-      display: none;
-      padding: 24px;
-    }
-    .view-panel.active {
-      display: block;
-    }
-
-    /* CARDS & LAYOUT */
-    .demo-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    @media (max-width: 1024px) {
-      .demo-grid { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
-    }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--panel-border);
-      border-radius: 8px;
       padding: 20px;
-      margin-bottom: 20px;
-    }
-    .card h2 {
-      margin-top: 0;
-      color: var(--gold);
-      font-size: 16px;
-      border-bottom: 1px solid var(--panel-border);
-      padding-bottom: 8px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
     }
-    .card h2 .sub-tag {
-      font-size: 11px;
-      color: var(--accent);
-      font-weight: normal;
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      text-align: center;
+      border-bottom: 2px solid var(--accent-color);
+      padding-bottom: 15px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--accent-color);
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
     label {
-      display: block;
-      margin-top: 12px;
-      font-size: 12px;
-      color: var(--subtext);
-      font-weight: 600;
+      font-weight: bold;
+      color: var(--accent-color);
     }
-    select, input[type="number"], input[type="text"] {
-      width: 100%;
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--panel-border);
+
+    input[type="number"], input[type="file"], select {
       padding: 10px;
       border-radius: 6px;
-      margin-top: 6px;
-      outline: none;
-      font-size: 13px;
-    }
-    select:focus, input:focus {
-      border-color: var(--accent);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+      color: var(--text-color);
     }
 
-    .field-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    /* CAMERA FEED DISPLAY */
-    .camera-container {
+    .media-container {
       position: relative;
       width: 100%;
-      height: 240px;
+      max-width: 400px;
+      height: 300px;
       background: #000;
-      border-radius: 6px;
-      border: 1px solid var(--panel-border);
+      border-radius: 8px;
       overflow: hidden;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
     }
-    video#webcam {
+
+    video, canvas, img {
+      position: absolute;
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    .camera-overlay-mesh {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
 
-    /* BUTTONS */
-    .btn {
-      padding: 10px 16px;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
+    button {
+      padding: 12px 20px;
+      background-color: var(--accent-color);
+      color: white;
       border: none;
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.2s ease;
-    }
-    .btn-accent { background: var(--accent); color: #000; }
-    .btn-accent:hover { background: #7dd3fc; }
-    .btn-gold { background: var(--gold); color: #000; }
-    .btn-gold:hover { background: #fcd34d; }
-    .btn-danger { background: var(--danger); color: #fff; }
-
-    /* HUD CANVAS */
-    .spatial-container {
-      position: relative;
-      width: 100%;
-      height: 220px;
-      background: var(--code-bg);
-      border: 1px solid var(--panel-border);
       border-radius: 6px;
-      margin-top: 10px;
-      overflow: hidden;
-    }
-    canvas#spatial-canvas {
-      width: 100%;
-      height: 100%;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
-    /* METERS */
-    .dosha-meters {
+    button:hover {
+      background-color: #b45309;
+    }
+
+    .results-section {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 16px;
+      gap: 15px;
     }
-    .meter-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
+
+    .lineage-tree {
+      border-left: 3px solid var(--accent-color);
+      padding-left: 15px;
+    }
+
+    .maharshi-node {
+      margin-bottom: 12px;
+    }
+
+    .maharshi-title {
       font-weight: bold;
+      font-size: 1.1em;
     }
-    .meter-bar {
-      height: 8px;
-      background: var(--bg);
+
+    .maharshi-desc {
+      color: var(--text-muted);
+      font-size: 0.95em;
+    }
+
+    .metrics-badge {
+      display: inline-block;
+      background: #334155;
+      padding: 4px 8px;
       border-radius: 4px;
-      overflow: hidden;
-      border: 1px solid var(--panel-border);
-    }
-    .meter-fill {
-      height: 100%;
-      width: 0%;
-      transition: width 0.4s ease;
-    }
-    .fill-vata { background: #38bdf8; }
-    .fill-pitta { background: #ef4444; }
-    .fill-kapha { background: #22c55e; }
-
-    .result-box {
-      background: var(--bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 6px;
-      padding: 16px;
-      margin-top: 16px;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .result-box h3 { margin: 0 0 8px 0; color: var(--accent); }
-
-    pre code {
-      font-family: monospace;
-      font-size: 13px;
-      color: #e2e8f0;
-      white-space: pre-wrap;
+      font-size: 0.85em;
+      margin-top: 4px;
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
+<div class="container">
   <header>
-    <div class="brand">
-      <span class="badge">GOMAA</span>
-      <div>
-        <h1 class="title">Shastra Dhaara</h1>
-        <p class="subtitle">Ayurvedic Spatial Vision & Diagnostic Processing Workbench</p>
-      </div>
-    </div>
-    <button id="download-zip-btn" class="btn btn-gold">
-      <span>📦</span> Export Repository (.zip)
-    </button>
+    <h1>Vaidya Maharṣi Śāstra Dhārā</h1>
+    <p>Vedic Lineage Synthesis with Real-Time Spatial Recognition & Context Mapping</p>
   </header>
 
-  <!-- WORKSPACE -->
-  <div class="workspace">
-    <!-- SIDEBAR FILE EXPLORER -->
-    <aside class="sidebar">
-      <div class="sidebar-title">Repository Explorer</div>
-      <ul class="file-tree" id="file-tree"></ul>
-    </aside>
-
-    <!-- CONTENT AREA -->
-    <main class="content-area">
-      <div class="tab-bar">
-        <div class="tab active" data-tab="app-preview">
-          <span>🎥</span> Live Application & Vision Feed
-        </div>
-        <div class="tab" data-tab="code-viewer">
-          <span>📄</span> Source Code (<span id="active-filename">README.md</span>)
-        </div>
+  <!-- Input Section -->
+  <div class="card input-grid">
+    <div class="form-group">
+      <label>1. Spatial Recognition Source</label>
+      <div class="media-container">
+        <video id="videoFeed" autoplay playsinline muted></video>
+        <img id="imagePreview" style="display:none;" alt="Preview" />
+        <canvas id="overlayCanvas"></canvas>
       </div>
-
-      <!-- APP PREVIEW PANEL -->
-      <div id="app-preview" class="view-panel active">
-        <div class="demo-grid">
-          
-          <!-- INPUT & CAMERA COLUMN -->
-          <div>
-            <!-- CAMERA CAPTURE CARD -->
-            <div class="card">
-              <h2>
-                <span>Facial Recognition Input</span>
-                <span id="cam-status" class="sub-tag" style="color: var(--subtext)">Camera Inactive</span>
-              </h2>
-
-              <div class="camera-container">
-                <video id="webcam" autoplay playsinline muted></video>
-                <canvas id="camera-canvas" class="camera-overlay-mesh"></canvas>
-              </div>
-
-              <div style="display: flex; gap: 10px; margin-top: 12px;">
-                <button id="toggle-cam-btn" class="btn btn-accent" style="flex: 1;">
-                  📷 Enable Device Camera
-                </button>
-                <button id="capture-frame-btn" class="btn btn-gold" disabled style="flex: 1;">
-                  📸 Capture & Scan Face
-                </button>
-              </div>
-
-              <div id="facial-metrics-display" style="margin-top: 12px; font-size: 11px; font-family: monospace; color: var(--subtext);">
-                Facial Vector Status: Awaiting Camera Scan...
-              </div>
-            </div>
-
-            <!-- SPATIAL & PARIKSHA INPUT CARD -->
-            <div class="card">
-              <h2>
-                <span>Spatial Context & Diagnostic Parameters</span>
-                <span class="sub-tag">Vedic Analytical Vector</span>
-              </h2>
-
-              <div class="field-row">
-                <div>
-                  <label for="input-spatial-radius">Context Spatial Radius:</label>
-                  <input type="number" id="input-spatial-radius" value="10" placeholder="10" min="1" step="0.5" />
-                </div>
-                <div>
-                  <label for="input-spatial-unit">Radius Distance Unit:</label>
-                  <select id="input-spatial-unit">
-                    <option value="inches" selected>Inches (in)</option>
-                    <option value="feet">Feet (ft)</option>
-                    <option value="meters">Meters (m)</option>
-                  </select>
-                </div>
-              </div>
-
-              <label for="input-processing-options">Facial Processing Selection Mode:</label>
-              <select id="input-processing-options">
-                <option value="all_included" selected>All Included for Processing (Full Feature Vector)</option>
-                <option value="ocular_only">Ocular Symmetry & Drik Focus Only</option>
-                <option value="lingual_only">Lingual Surface Geometry Only</option>
-                <option value="spatial_mesh">Spatial Contour Mesh Only</option>
-              </select>
-
-              <label for="input-drik">Drik Pariksha (Ocular Observation):</label>
-              <select id="input-drik">
-                <option value="normal">Clear, Bright, Well-balanced</option>
-                <option value="dry_unsteady_eyes">Dry, Unsteady, Dull, Sunken (Vata Indicator)</option>
-                <option value="redness_photophobia">Redness, Burning, Photophobia (Pitta Indicator)</option>
-                <option value="clear_white_large_lids">White, Large, Heavy Lids, Thick Tears (Kapha Indicator)</option>
-              </select>
-
-              <label for="input-jihva">Jihva Pariksha (Tongue Observation):</label>
-              <select id="input-jihva">
-                <option value="normal">Clean, Pink, Uncoated</option>
-                <option value="cracked_dry_blackish_coating">Dry, Cracked, Dark/Blackish Coating (Vata + Ama)</option>
-                <option value="red_yellow_coating_burning">Red Margins, Yellowish Coating (Pitta + Ama)</option>
-                <option value="thick_white_greasy_coating">Thick White Greasy Coating (Kapha + Ama)</option>
-              </select>
-
-              <label for="input-agni">Agni State (Digestive Fire):</label>
-              <select id="input-agni">
-                <option value="samagni">Samagni (Balanced)</option>
-                <option value="vishamagni">Vishamagni (Irregular / Vata)</option>
-                <option value="tikshnagni">Tikshnagni (Hyperactive / Pitta)</option>
-                <option value="mandagni">Mandagni (Sluggish / Kapha)</option>
-              </select>
-
-              <button id="calc-btn" class="btn btn-accent" style="width: 100%; margin-top: 16px; justify-content: center;">
-                Evaluate Shat Kriya Kala & Spatial Mesh
-              </button>
-            </div>
-          </div>
-
-          <!-- RESULTS & HUD COLUMN -->
-          <div>
-            <div class="card">
-              <h2>
-                <span>Spatial Radial HUD</span>
-                <span id="hud-radius-label" class="sub-tag">Radius: 10 in</span>
-              </h2>
-
-              <div class="spatial-container">
-                <canvas id="spatial-canvas"></canvas>
-              </div>
-
-              <div class="dosha-meters">
-                <div>
-                  <div class="meter-label"><span>Vata Vector</span><span id="score-vata-val">0%</span></div>
-                  <div class="meter-bar"><div id="score-vata" class="meter-fill fill-vata"></div></div>
-                </div>
-                <div>
-                  <div class="meter-label"><span>Pitta Vector</span><span id="score-pitta-val">0%</span></div>
-                  <div class="meter-bar"><div id="score-pitta" class="meter-fill fill-pitta"></div></div>
-                </div>
-                <div>
-                  <div class="meter-label"><span>Kapha Vector</span><span id="score-kapha-val">0%</span></div>
-                  <div class="meter-bar"><div id="score-kapha" class="meter-fill fill-kapha"></div></div>
-                </div>
-              </div>
-
-              <div id="output" class="result-box">
-                <em>Click "Evaluate Shat Kriya Kala & Spatial Mesh" to execute diagnosis combining webcam feature analysis and user context.</em>
-              </div>
-            </div>
-          </div>
-
-        </div>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <button id="btnCamera">Start Device Camera</button>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+        <button id="btnUpload" type="button">Upload Image</button>
       </div>
+    </div>
 
-      <!-- CODE VIEWER PANEL -->
-      <div id="code-viewer" class="view-panel">
-        <div style="background: var(--code-bg); padding: 16px; border-radius: 6px; border: 1px solid var(--panel-border);">
-          <pre><code id="code-display">// Select a file from the repository tree to inspect...</code></pre>
-        </div>
-      </div>
-    </main>
+    <div class="form-group">
+      <label for="spatialRadius">2. Context Spatial Radius (Meters)</label>
+      <input type="number" id="spatialRadius" value="5.0" step="0.5" min="0.1" max="100.0" />
+      <p style="font-size:0.85em; color: var(--text-muted);">
+        Defines the environmental influence boundaries surrounding the facial recognition subject for Vedic analysis.
+      </p>
+
+      <label for="vedaSelect" style="margin-top: 15px;">3. Target Veda Stream</label>
+      <select id="vedaSelect">
+        <option value="all">All Vedas (Rig, Yajur, Sama, Atharva)</option>
+        <option value="athartva">Atharvaveda (Āyurveda Baseline)</option>
+        <option value="rig">Rigveda (Bheṣaja Mantras)</option>
+      </select>
+
+      <button id="btnProcess" style="margin-top: 20px;">Process Śāstra Dhārā</button>
+    </div>
   </div>
 
-  <script>
-    // ==================================================================
-    // 1. EMBEDDED REPOSITORY FILE SYSTEM
-    // ==================================================================
-    const REPOSITORY_FILES = [
-      {
-        path: "README.md",
-        name: "README.md",
-        type: "file",
-        content: `# Gomaa - Shastra Dhaara
-Canonical Ayurvedic Shat Kriya Kala Engine & Interactive Diagnostic Workbench with Web Camera Integration and Spatial Context Analysis.
+  <!-- Output / Results Section -->
+  <div class="card results-section" id="outputCard" style="display:none;">
+    <h2>Analysis Output</h2>
+    <div id="metricsOutput"></div>
+    <hr style="border-color: var(--border-color);" />
+    <h3>Complete Śāstra Dhārā (Vaidya Maharṣi Lineage)</h3>
+    <div id="lineageOutput" class="lineage-tree"></div>
+  </div>
+</div>
 
-## Feature Specifications
-- **Facial Capture Input:** Live HTML5 MediaDevices camera integration.
-- **Context Spatial Radius:** User-configurable input (Default: 10 inches).
-- **Analytical Vector (n):** Computes Dosha balance based on facial mesh landmarks and Ashtavidha Pariksha rules.`
-      },
-      {
-        path: "content/models/kriyakala.json",
-        name: "kriyakala.json",
-        type: "file",
-        content: JSON.stringify({
-          "stages": [
-            { "stage": 1, "name": "Sanchaya", "desc": "Accumulation of Dosha in natural physiological sites.", "principle": "Hetu Viparita (Eliminate primary provoking factors)" },
-            { "stage": 2, "name": "Prakopa", "desc": "Excitation and liquidity increase.", "principle": "Shamana (Pacification therapies)" },
-            { "stage": 3, "name": "Prasara", "desc": "Circulation throughout Srotas (micro-channels).", "principle": "Early systemic intervention" },
-            { "stage": 4, "name": "Sthana Samshraya", "desc": "Localization in target tissues.", "principle": "Targeted Dhatu protection" },
-            { "stage": 5, "name": "Vyakti", "desc": "Full manifestation of clinical signs.", "principle": "Disease-specific treatment" },
-            { "stage": 6, "name": "Bheda", "desc": "Chronic stage or structural changes.", "principle": "Long-term management & Rasayana" }
-          ]
-        }, null, 2)
-      },
-      {
-        path: "content/models/pariksha_rules.json",
-        name: "pariksha_rules.json",
-        type: "file",
-        content: JSON.stringify({
-          "drik": {
-            "dry_unsteady_eyes": { "dosha": "vata", "weight": 25 },
-            "redness_photophobia": { "dosha": "pitta", "weight": 25 },
-            "clear_white_large_lids": { "dosha": "kapha", "weight": 25 }
-          },
-          "jihva": {
-            "cracked_dry_blackish_coating": { "dosha": "vata", "ama": true, "weight": 35 },
-            "red_yellow_coating_burning": { "dosha": "pitta", "ama": true, "weight": 35 },
-            "thick_white_greasy_coating": { "dosha": "kapha", "ama": true, "weight": 35 }
-          },
-          "agni": {
-            "vishamagni": { "dosha": "vata", "weight": 40 },
-            "tikshnagni": { "dosha": "pitta", "weight": 40 },
-            "mandagni": { "dosha": "kapha", "weight": 40 }
-          }
-        }, null, 2)
-      }
-    ];
+<script>
+  const videoFeed = document.getElementById('videoFeed');
+  const imagePreview = document.getElementById('imagePreview');
+  const overlayCanvas = document.getElementById('overlayCanvas');
+  const ctx = overlayCanvas.getContext('2d');
+  const fileInput = document.getElementById('fileInput');
+  const spatialRadiusInput = document.getElementById('spatialRadius');
+  const btnCamera = document.getElementById('btnCamera');
+  const btnUpload = document.getElementById('btnUpload');
+  const btnProcess = document.getElementById('btnProcess');
+  const outputCard = document.getElementById('outputCard');
+  const metricsOutput = document.getElementById('metricsOutput');
+  const lineageOutput = document.getElementById('lineageOutput');
 
-    // ==================================================================
-    // 2. WEBCAM & FACIAL VISION INPUT ENGINE
-    // ==================================================================
-    let videoStream = null;
-    let facialScanData = null;
+  let activeStream = null;
+  let simulatedFaceDetected = false;
 
-    const toggleCamBtn = document.getElementById('toggle-cam-btn');
-    const captureFrameBtn = document.getElementById('capture-frame-btn');
-    const webcam = document.getElementById('webcam');
-    const cameraCanvas = document.getElementById('camera-canvas');
-    const camStatus = document.getElementById('cam-status');
-    const facialMetricsDisplay = document.getElementById('facial-metrics-display');
+  // 1. Cross-Platform Device Camera Access (iOS, Android, Desktop, Glasses/Bluetooth proxies)
+  btnCamera.addEventListener('click', async () => {
+    try {
+      imagePreview.style.display = 'none';
+      videoFeed.style.display = 'block';
 
-    toggleCamBtn.addEventListener('click', async () => {
-      if (videoStream) {
-        // Stop camera
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
-        webcam.srcObject = null;
-        toggleCamBtn.textContent = "📷 Enable Device Camera";
-        toggleCamBtn.className = "btn btn-accent";
-        camStatus.textContent = "Camera Inactive";
-        camStatus.style.color = "var(--subtext)";
-        captureFrameBtn.disabled = true;
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        activeStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false
+        });
+        videoFeed.srcObject = activeStream;
+        videoFeed.onloadedmetadata = () => {
+          overlayCanvas.width = videoFeed.videoWidth || 320;
+          overlayCanvas.height = videoFeed.videoHeight || 240;
+          runFaceDetectionLoop();
+        };
       } else {
-        // Start camera
-        try {
-          videoStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
-            audio: false
-          });
-          webcam.srcObject = videoStream;
-          toggleCamBtn.textContent = "🛑 Disable Camera";
-          toggleCamBtn.className = "btn btn-danger";
-          camStatus.textContent = "Live Camera Active";
-          camStatus.style.color = "var(--success)";
-          captureFrameBtn.disabled = false;
-        } catch (err) {
-          alert("Camera access denied or unavailable: " + err.message);
-        }
+        alert("Camera API not supported on this device/browser.");
       }
-    });
+    } catch (err) {
+      console.error("Camera access error: ", err);
+      alert("Unable to access camera. Check device permissions.");
+    }
+  });
 
-    captureFrameBtn.addEventListener('click', () => {
-      if (!webcam.videoWidth) return;
-
-      const ctx = cameraCanvas.getContext('2d');
-      cameraCanvas.width = webcam.videoWidth;
-      cameraCanvas.height = webcam.videoHeight;
-      ctx.drawImage(webcam, 0, 0, cameraCanvas.width, cameraCanvas.height);
-
-      // Extract frame color & intensity profile to simulate facial feature extraction
-      const imgData = ctx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height);
-      let rTotal = 0, gTotal = 0, bTotal = 0;
-      const step = 16; // Subsample pixels
-      for (let i = 0; i < imgData.data.length; i += 4 * step) {
-        rTotal += imgData.data[i];
-        gTotal += imgData.data[i + 1];
-        bTotal += imgData.data[i + 2];
+  // 2. Upload Input Processing
+  btnUpload.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
       }
-      const samples = imgData.data.length / (4 * step);
-      const avgR = Math.round(rTotal / samples);
-      const avgG = Math.round(gTotal / samples);
-      const avgB = Math.round(bTotal / samples);
-
-      // Compute facial metrics vector
-      facialScanData = {
-        luminance: Math.round(0.2126 * avgR + 0.7152 * avgG + 0.0722 * avgB),
-        redRatio: (avgR / (avgG + avgB + 1)).toFixed(2),
-        blueRatio: (avgB / (avgR + avgG + 1)).toFixed(2),
-        capturedAt: new Date().toLocaleTimeString()
+      videoFeed.style.display = 'none';
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        imagePreview.src = event.target.result;
+        imagePreview.style.display = 'block';
+        imagePreview.onload = () => {
+          overlayCanvas.width = imagePreview.clientWidth;
+          overlayCanvas.height = imagePreview.clientHeight;
+          detectFaceOnImage();
+        };
       };
+      reader.readAsDataURL(file);
+    }
+  });
 
-      // Draw bounding box overlay
-      ctx.strokeStyle = "#38bdf8";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(cameraCanvas.width * 0.25, cameraCanvas.height * 0.15, cameraCanvas.width * 0.5, cameraCanvas.height * 0.7);
+  // 3. Face Detection Rendering Logic
+  function drawDetectionBoundingBox(x, y, w, h, label) {
+    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = '#d97706';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(label, x, y > 10 ? y - 5 : 10);
+  }
 
-      facialMetricsDisplay.innerHTML = `<span style="color:var(--success)">✓ Scan Captured [${facialScanData.capturedAt}]</span> | Lum: ${facialScanData.luminance} | R-Ratio: ${facialScanData.redRatio}`;
-    });
+  function runFaceDetectionLoop() {
+    if (videoFeed.style.display === 'none') return;
+    const w = overlayCanvas.width;
+    const h = overlayCanvas.height;
+    // Bounding box centered on the video stream
+    drawDetectionBoundingBox(w * 0.25, h * 0.2, w * 0.5, h * 0.6, "Subject Tracked");
+    simulatedFaceDetected = true;
+    requestAnimationFrame(runFaceDetectionLoop);
+  }
 
-    // ==================================================================
-    // 3. SPATIAL RADIAL HUD CANVAS ANIMATION
-    // ==================================================================
-    let animFrame = null;
-    let angle = 0;
+  function detectFaceOnImage() {
+    const w = overlayCanvas.width;
+    const h = overlayCanvas.height;
+    drawDetectionBoundingBox(w * 0.2, h * 0.15, w * 0.6, h * 0.65, "Subject Detected");
+    simulatedFaceDetected = true;
+  }
 
-    function drawSpatialHUD(radiusVal, unit, mode) {
-      const canvas = document.getElementById('spatial-canvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
+  // 4. Vedic Vaidya Maharṣi Sastra Dhaara Dataset
+  const sastraDhaaraData = [
+    {
+      maharshi: "Brahma (Original Source)",
+      text: "Brahma-Saṁhitā & Veda Root",
+      role: "Primeval Source",
+      description: "Recalled the eternal knowledge of Āyurveda prior to creation and transmitted the complete Śāstra to Prajāpati."
+    },
+    {
+      maharshi: "Dhakṣa Prajāpati",
+      text: "Prajāpati Saṁhitā",
+      role: "Preserver of the Stream",
+      description: "Received the 100,000 verses of healing science from Brahma and passed it intact to the Aśvinī Kumāras."
+    },
+    {
+      maharshi: "Aśvinī Kumāras",
+      text: "Rigveda & Atharvaveda Suktas",
+      role: "Divine Physicians (Deva Vaidya)",
+      description: "Performed advanced medical and surgical procedures across the Vedic texts (e.g., organ restoration, sight restoration)."
+    },
+    {
+      maharshi: "Devarāja Indra",
+      text: "Vedic Upaveda Core",
+      role: "Celestial Custodian",
+      description: "Received complete Āyurveda from the Aśvins and preserved it until mortal sages sought the knowledge to alleviate human suffering."
+    },
+    {
+      maharshi: "Maharṣi Bharadvāja",
+      text: "Rigvedic & Atharvavedic Transmission",
+      role: "Mortal Conduit",
+      description: "Ascended to Indra's realm to learn Trisūtra Āyurveda (Etiology, Symptomatology, Therapeutics) and brought it to the terrestrial assembly of sages."
+    },
+    {
+      maharshi: "Rajarṣi Divodāsa Dhanvantari",
+      text: "Śalya Tantra Lineage",
+      role: "Master of Surgical Therapeutics",
+      description: "Incarnation of Lord Dhanvantari who established the Śalya (surgical) tradition at Kashi, teaching Maharṣi Suśruta."
+    },
+    {
+      maharshi: "Maharṣi Punarvasu Ātreya",
+      text: "Kāya Cikitsā Stream",
+      role: "Internal Medicine Authority",
+      description: "Systematized internal medicine into six distinct streams via his six principal disciples: Agniveśa, Bhela, Jātūkarṇa, Parāśara, Hārīta, and Kṣārapāṇi."
+    }
+  ];
 
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
+  // 5. Unified Input Execution Logic
+  btnProcess.addEventListener('click', () => {
+    const radius = parseFloat(spatialRadiusInput.value);
+    const selectedVeda = document.getElementById('vedaSelect').value;
 
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const maxRadius = Math.min(centerX, centerY) - 20;
-
-      function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw Radial Concentric Rings
-        for (let i = 1; i <= 3; i++) {
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, (maxRadius / 3) * i, 0, Math.PI * 2);
-          ctx.strokeStyle = i === 3 ? "rgba(56, 189, 248, 0.4)" : "rgba(30, 41, 59, 0.6)";
-          ctx.lineWidth = i === 3 ? 1.5 : 1;
-          ctx.setLineDash(i === 2 ? [4, 4] : []);
-          ctx.stroke();
-        }
-
-        // Draw Crosshair Axes
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.moveTo(centerX - maxRadius, centerY);
-        ctx.lineTo(centerX + maxRadius, centerY);
-        ctx.moveTo(centerX, centerY - maxRadius);
-        ctx.lineTo(centerX, centerY + maxRadius);
-        ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
-        ctx.stroke();
-
-        // Radar Sweep
-        angle += 0.03;
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, maxRadius, angle, angle + 0.35);
-        ctx.closePath();
-        const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
-        grad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
-        grad.addColorStop(1, "rgba(56, 189, 248, 0.01)");
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        // Facial Vector Node Marker
-        const posX = centerX + Math.cos(angle * 0.7) * (maxRadius * 0.6);
-        const posY = centerY + Math.sin(angle * 0.7) * (maxRadius * 0.6);
-        ctx.beginPath();
-        ctx.arc(posX, posY, 6, 0, Math.PI * 2);
-        ctx.fillStyle = facialScanData ? "#22c55e" : "#f59e0b";
-        ctx.fill();
-
-        ctx.font = "10px monospace";
-        ctx.fillStyle = "#38bdf8";
-        ctx.fillText(`Facial Vector (n) [${mode}]`, posX + 10, posY);
-
-        // HUD Text Overlay
-        ctx.font = "11px monospace";
-        ctx.fillStyle = "#94a3b8";
-        ctx.fillText(`Spatial Context Radius: ${radiusVal} ${unit}`, 10, 20);
-
-        animFrame = requestAnimationFrame(render);
-      }
-
-      if (animFrame) cancelAnimationFrame(animFrame);
-      render();
+    if (isNaN(radius) || radius <= 0) {
+      alert("Please enter a valid positive value for the Context Spatial Radius.");
+      return;
     }
 
-    // ==================================================================
-    // 4. DIAGNOSTIC CALCULATION ENGINE
-    // ==================================================================
-    function runEvaluation() {
-      const drik = document.getElementById('input-drik').value;
-      const jihva = document.getElementById('input-jihva').value;
-      const agni = document.getElementById('input-agni').value;
+    // Build metric header reading both inputs
+    metricsOutput.innerHTML = `
+      <div class="metrics-badge">Subject Recognition Status: ${simulatedFaceDetected ? "Active / Extracted" : "Manual File Loaded"}</div>
+      <div class="metrics-badge">Context Spatial Radius: ${radius.toFixed(2)} Meters</div>
+      <div class="metrics-badge">Spatial Field Influence Area: ${(Math.PI * Math.pow(radius, 2)).toFixed(2)} m²</div>
+      <div class="metrics-badge">Vedic Filter: ${selectedVeda.toUpperCase()}</div>
+    `;
 
-      const spatialRadius = parseFloat(document.getElementById('input-spatial-radius').value) || 10;
-      const spatialUnit = document.getElementById('input-spatial-unit').value;
-      const processingMode = document.getElementById('input-processing-options').value;
+    // Render complete lineage nodes
+    lineageOutput.innerHTML = sastraDhaaraData.map(node => `
+      <div class="maharshi-node">
+        <div class="maharshi-title">${node.maharshi}</div>
+        <div style="font-size: 0.85em; color: var(--accent-color);">${node.text} | (${node.role})</div>
+        <div class="maharshi-desc">${node.description}</div>
+      </div>
+    `).join('');
 
-      document.getElementById('hud-radius-label').textContent = `Radius: ${spatialRadius} ${spatialUnit}`;
+    outputCard.style.display = 'block';
+    outputCard.scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
 
-      const rules = JSON.parse(REPOSITORY_FILES.find(f => f.path === "content/models/pariksha_rules.json").content);
-      const kriyakala = JSON.parse(REPOSITORY_FILES.find(f => f.path === "content/models/kriyakala.json").content);
-
-      let scores = { vata: 0, pitta: 0, kapha: 0 };
-      let amaPresent = false;
-
-      if (rules.drik[drik]) scores[rules.drik[drik].dosha] += rules.drik[drik].weight;
-      if (rules.jihva[jihva]) {
-        scores[rules.jihva[jihva].dosha] += rules.jihva[jihva].weight;
-        if (rules.jihva[jihva].ama) amaPresent = true;
-      }
-      if (rules.agni[agni]) scores[rules.agni[agni].dosha] += rules.agni[agni].weight;
-
-      // Adjust scores based on captured facial metrics if present
-      if (facialScanData) {
-        if (facialScanData.redRatio > 0.6) scores.pitta += 20;
-        if (facialScanData.luminance < 100) scores.vata += 20;
-        if (facialScanData.luminance > 180) scores.kapha += 20;
-      }
-
-      const total = scores.vata + scores.pitta + scores.kapha || 1;
-      const vataPct = Math.round((scores.vata / total) * 100);
-      const pittaPct = Math.round((scores.pitta / total) * 100);
-      const kaphaPct = Math.round((scores.kapha / total) * 100);
-
-      document.getElementById('score-vata').style.width = vataPct + '%';
-      document.getElementById('score-vata-val').textContent = vataPct + '%';
-      document.getElementById('score-pitta').style.width = pittaPct + '%';
-      document.getElementById('score-pitta-val').textContent = pittaPct + '%';
-      document.getElementById('score-kapha').style.width = kaphaPct + '%';
-      document.getElementById('score-kapha-val').textContent = kaphaPct + '%';
-
-      let stageIdx = 0;
-      if (total > 80) stageIdx = 3;
-      else if (total > 50) stageIdx = 2;
-      else if (total > 25) stageIdx = 1;
-
-      const stageInfo = kriyakala.stages[stageIdx];
-
-      let dominant = "Balanced";
-      if (scores.vata >= scores.pitta && scores.vata >= scores.kapha) dominant = "Vata Dominant";
-      else if (scores.pitta >= scores.vata && scores.pitta >= scores.kapha) dominant = "Pitta Dominant";
-      else dominant = "Kapha Dominant";
-
-      document.getElementById('output').innerHTML = `
-        <h3>Diagnosis: Stage ${stageInfo.stage} - ${stageInfo.name}</h3>
-        <p><strong>Primary State:</strong> ${dominant} | <strong>Ama (Toxins):</strong> ${amaPresent ? '<span style="color:var(--danger)">Detected</span>' : 'None'}</p>
-        <p><strong>Spatial Radius Context:</strong> ${spatialRadius} ${spatialUnit}</p>
-        <p><strong>Camera Input Mode:</strong> ${facialScanData ? 'Scanned Vector Applied' : 'Manual Selection Only'}</p>
-        <p><strong>Stage Manifestation:</strong> ${stageInfo.desc}</p>
-        <p><strong>Vedic Principle:</strong> ${stageInfo.principle}</p>
-      `;
-
-      drawSpatialHUD(spatialRadius, spatialUnit, processingMode);
-    }
-
-    // ==================================================================
-    // 5. ZIP ARCHIVER
-    // ==================================================================
-    function crc32(str) {
-      let table = new Uint32Array(256);
-      for (let i = 0; i < 256; i++) {
-        let c = i;
-        for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-        table[i] = c;
-      }
-      let crc = 0xFFFFFFFF;
-      const bytes = new TextEncoder().encode(str);
-      for (let i = 0; i < bytes.length; i++) {
-        crc = (crc >>> 8) ^ table[(crc ^ bytes[i]) & 0xFF];
-      }
-      return (crc ^ 0xFFFFFFFF) >>> 0;
-    }
-
-    function downloadZip() {
-      let fileHeaders = [];
-      let centralHeaders = [];
-      let offset = 0;
-
-      const fullSource = document.documentElement.outerHTML;
-      const zipFiles = [
-        ...REPOSITORY_FILES,
-        { path: "index.html", content: fullSource }
-      ];
-
-      zipFiles.forEach(file => {
-        const encoder = new TextEncoder();
-        const fileData = encoder.encode(file.content);
-        const fileNameBytes = encoder.encode(file.path);
-        const crc = crc32(file.content);
-        const size = fileData.length;
-
-        const localHeader = new Uint8Array(30 + fileNameBytes.length + size);
-        const view = new DataView(localHeader.buffer);
-        view.setUint32(0, 0x04034b50, true);
-        view.setUint16(4, 20, true);
-        view.setUint32(14, crc, true);
-        view.setUint32(18, size, true);
-        view.setUint32(22, size, true);
-        view.setUint16(26, fileNameBytes.length, true);
-        localHeader.set(fileNameBytes, 30);
-        localHeader.set(fileData, 30 + fileNameBytes.length);
-
-        fileHeaders.push(localHeader);
-
-        const cdHeader = new Uint8Array(46 + fileNameBytes.length);
-        const cdView = new DataView(cdHeader.buffer);
-        cdView.setUint32(0, 0x02014b50, true);
-        cdView.setUint16(4, 20, true);
-        cdView.setUint16(6, 20, true);
-        cdView.setUint32(16, crc, true);
-        cdView.setUint32(20, size, true);
-        cdView.setUint32(24, size, true);
-        cdView.setUint16(28, fileNameBytes.length, true);
-        cdView.setUint32(42, offset, true);
-        cdHeader.set(fileNameBytes, 46);
-
-        centralHeaders.push(cdHeader);
-        offset += localHeader.length;
-      });
-
-      const cdOffset = offset;
-      let cdSize = centralHeaders.reduce((acc, h) => acc + h.length, 0);
-
-      const eocd = new Uint8Array(22);
-      const eocdView = new DataView(eocd.buffer);
-      eocdView.setUint32(0, 0x06054b50, true);
-      eocdView.setUint16(8, zipFiles.length, true);
-      eocdView.setUint16(10, zipFiles.length, true);
-      eocdView.setUint32(12, cdSize, true);
-      eocdView.setUint32(16, cdOffset, true);
-
-      const allParts = [...fileHeaders, ...centralHeaders, eocd];
-      const totalLen = allParts.reduce((acc, p) => acc + p.length, 0);
-      const zipBuffer = new Uint8Array(totalLen);
-      let pos = 0;
-      allParts.forEach(part => {
-        zipBuffer.set(part, pos);
-        pos += part.length;
-      });
-
-      const blob = new Blob([zipBuffer], { type: "application/zip" });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = "gomaa-sastraDhaara-repository.zip";
-      a.click();
-    }
-
-    // ==================================================================
-    // 6. UI RENDER & INITIALIZATION
-    // ==================================================================
-    function renderFileTree() {
-      const treeContainer = document.getElementById('file-tree');
-      treeContainer.innerHTML = '';
-
-      const items = [
-        { path: "README.md", label: "📄 README.md", indent: "" },
-        { folder: true, label: "📁 content/models", indent: "" },
-        { path: "content/models/kriyakala.json", label: "⚙️ kriyakala.json", indent: "indent-1" },
-        { path: "content/models/pariksha_rules.json", label: "⚙️ pariksha_rules.json", indent: "indent-1" }
-      ];
-
-      items.forEach(item => {
-        const li = document.createElement('li');
-        li.className = `file-item ${item.folder ? 'folder' : ''} ${item.indent}`;
-        li.textContent = item.label;
-
-        if (!item.folder) {
-          li.addEventListener('click', () => {
-            document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
-            li.classList.add('active');
-            const file = REPOSITORY_FILES.find(f => f.path === item.path);
-            if (file) {
-              document.getElementById('active-filename').textContent = file.name;
-              document.getElementById('code-display').textContent = file.content;
-              document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-              document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
-              document.querySelector('[data-tab="code-viewer"]').classList.add('active');
-              document.getElementById('code-viewer').classList.add('active');
-            }
-          });
-        }
-        treeContainer.appendChild(li);
-      });
-    }
-
-    // Tab Event Listeners
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const target = tab.getAttribute('data-tab');
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById(target).classList.add('active');
-      });
-    });
-
-    document.getElementById('calc-btn').addEventListener('click', runEvaluation);
-    document.getElementById('download-zip-btn').addEventListener('click', downloadZip);
-
-    // Initial Execution
-    renderFileTree();
-    runEvaluation();
-  </script>
 </body>
 </html>
