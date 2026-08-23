@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repository Engine & Diagnostic Workbench</title>
+  <style>
+    :root {
+      --bg: #070a12;
+      --panel: #0f172a;
+      --panel-border: #1e293b;
+      --accent: #38bdf8;
+      --accent-muted: rgba(56, 189, 248, 0.15);
+      --gold: #f59e0b;
+      --gold-muted: rgba(245, 158, 11, 0.15);
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --code-bg: #020617;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .title { font-size: 18px; font-weight: 700; margin: 0; }
+    .workspace { display: flex; flex: 1; overflow: hidden; }
+    .sidebar {
+      width: 280px;
+      background: #0b1120;
+      border-right: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+    }
+    .file-tree { list-style: none; margin: 0; padding: 8px 0; overflow-y: auto; }
+    .file-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-family: monospace;
+      color: var(--subtext);
+      cursor: pointer;
+    }
+    .file-item:hover { background: var(--panel-border); color: var(--text); }
+    .file-item.active { background: var(--accent-muted); color: var(--accent); }
+    .content-area { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+    .tab-bar { display: flex; background: #0b1120; border-bottom: 1px solid var(--panel-border); }
+    .tab {
+      padding: 10px 18px;
+      font-size: 13px;
+      color: var(--subtext);
+      border-right: 1px solid var(--panel-border);
+      cursor: pointer;
+      background: var(--panel);
+    }
+    .tab.active { background: var(--bg); color: var(--text); border-top: 2px solid var(--accent); }
+    .view-panel { flex: 1; display: none; overflow: auto; padding: 20px; }
+    .view-panel.active { display: block; }
+    pre { margin: 0; }
+    code { font-family: monospace; font-size: 13px; color: #e2e8f0; }
+    .btn {
+      padding: 8px 16px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      font-size: 13px;
+    }
+    .btn-gold { background: var(--gold); color: #000; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1 class="title">Repository & Diagnostic Workbench</h1>
+    </div>
+    <div>
+      <button id="download-zip-btn" class="btn btn-gold">Export Repository (.zip)</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <ul class="file-tree" id="file-tree"></ul>
+    </aside>
+
+    <main class="content-area">
+      <div class="tab-bar">
+        <div class="tab active" data-tab="app-preview">Interactive Preview</div>
+        <div class="tab" data-tab="code-viewer">Source Code Viewer</div>
+      </div>
+
+      <div id="app-preview" class="view-panel active">
+        <h2>Workbench Main Screen</h2>
+        <p>File system loaded. Use the button in the header to download the project archive.</p>
+      </div>
+
+      <div id="code-viewer" class="view-panel">
+        <pre><code id="code-display">// Select a file to inspect...</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const REPOSITORY_FILES = [
+      {
+        path: "README.md",
+        name: "README.md",
+        content: "# Workbench Repository\n\nGenerated files context."
+      },
+      {
+        path: "index.html",
+        name: "index.html",
+        content: "<!DOCTYPE html>\n<html>\n<head><title>Index</title></head>\n<body><h1>Repository Index</h1></body>\n</html>"
+      }
+    ];
+
+    function renderFileTree() {
+      const tree = document.getElementById('file-tree');
+      tree.innerHTML = '';
+      REPOSITORY_FILES.forEach(file => {
+        const li = document.createElement('li');
+        li.className = 'file-item';
+        li.textContent = file.name;
+        li.addEventListener('click', () => {
+          document.querySelectorAll('.file-item').forEach(e => e.classList.remove('active'));
+          li.classList.add('active');
+          document.getElementById('code-display').textContent = file.content;
+          
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+          document.querySelector('[data-tab="code-viewer"]').classList.add('active');
+          document.getElementById('code-viewer').classList.add('active');
+        });
+        tree.appendChild(li);
+      });
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-tab');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(target).classList.add('active');
+      });
+    });
+
+    document.getElementById('download-zip-btn').addEventListener('click', () => {
+      const blob = new Blob([REPOSITORY_FILES[1].content], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'index.html';
+      a.click();
+    });
+
+    renderFileTree();
+  </script>
+</body>
+</html>
