@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gomaa - Śāstra Dhārā | Comparative Analytics & Plotly Workbench</title>
+  <title>Gomaa - Śāstra Dhārā | Chart & Excel Workbook Workbench</title>
   
-  <!-- Include Plotly.js for Interactive Charts -->
+  <!-- Plotly.js for Interactive Charts -->
   <script src="https://cdn.plot.ly/plotly-3.7.0.min.js" charset="utf-8"></script>
+  <!-- SheetJS (xlsx) for Excel Workbook Generation -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" charset="utf-8"></script>
 
   <style>
     :root {
@@ -127,7 +129,6 @@
       object-fit: cover;
     }
 
-    /* Table styling */
     table.data-table {
       width: 100%;
       border-collapse: collapse;
@@ -153,7 +154,7 @@
 <div class="wrapper">
   <header>
     <h1>Gomaa - Śāstra Dhārā Workbench</h1>
-    <p class="subtitle">Comparative Pancakosha Predictive Analysis & Plotly Analytics</p>
+    <p class="subtitle">Pancakosha Predictive Analysis, Plotly Chart & Excel Sheet Export</p>
   </header>
 
   <!-- STEP 1: SELECT VEDIC LITERATURE CONTENT -->
@@ -200,13 +201,13 @@
     </div>
 
     <button id="btnEvaluate" class="btn btn-accent" style="margin-top: 16px;">
-      ⚡ Evaluate Vaidya Maharṣi & Generate Comparative Analysis
+      ⚡ Evaluate Vaidya Maharṣi & Display Results
     </button>
   </div>
 
-  <!-- STEP 4 & 5: RESULTS, PLOTLY CHART, TABLE & DOWNLOAD -->
+  <!-- STEP 4 & 5: RESULTS, PLOTLY CHART, TABLE & EXCEL DOWNLOAD -->
   <div class="step-card" id="outputCard" style="display:none;">
-    <h2><span class="step-num">4</span> Comparative Metric Results & Plotly Visualizer</h2>
+    <h2><span class="step-num">4</span> UI Results: Comparative Plotly Chart & Data Table</h2>
     
     <!-- Plotly Interactive Chart Container -->
     <div id="plotlyChartContainer" style="width:100%; height:320px; background:var(--bg); border:1px solid var(--border); border-radius:6px; margin-top:10px;"></div>
@@ -231,9 +232,9 @@
     </div>
 
     <div style="margin-top: 20px;">
-      <h2 style="border:none; margin:0 0 8px 0; font-size:14px;"><span class="step-num">5</span> Download Complete Sheet & Report</h2>
-      <button id="btnDownload" class="btn btn-success">
-        📥 Download Comprehensive Evaluated Response & Dataset (.json)
+      <h2 style="border:none; margin:0 0 8px 0; font-size:14px;"><span class="step-num">5</span> Download Data Spreadsheet</h2>
+      <button id="btnDownloadXlsx" class="btn btn-success">
+        📊 Download Results as Excel Workbook (.xlsx)
       </button>
     </div>
   </div>
@@ -253,11 +254,11 @@
   const btnCapture = document.getElementById('btnCapture');
   const btnUploadTrigger = document.getElementById('btnUploadTrigger');
   const btnEvaluate = document.getElementById('btnEvaluate');
-  const btnDownload = document.getElementById('btnDownload');
+  const btnDownloadXlsx = document.getElementById('btnDownloadXlsx');
 
   let activeStream = null;
   let scanMetadata = { status: "Pending", timestamp: null };
-  let evaluatedReportData = null;
+  let currentKoshaMetrics = [];
 
   // Step 2: Camera & Upload handlers
   btnStartCam.addEventListener('click', async () => {
@@ -343,12 +344,7 @@
       return;
     }
 
-    const radius = parseFloat(document.getElementById('spatialRadius').value) || 10;
-    const unit = document.getElementById('spatialUnit').value;
-    const vedaCorpus = document.getElementById('vedaSelect').value;
-
-    // Comparative Datasets (Ideal Maharishi Baseline vs Actual Processed Scan)
-    const koshaMetrics = [
+    currentKoshaMetrics = [
       { layer: "Annamaya Kosha", focus: "Physical / Somatic", ideal: 95, actual: 92, status: "Balanced (Optimal Dhatu)" },
       { layer: "Pranamaya Kosha", focus: "Biofield / Prana", ideal: 90, actual: 88, status: "Synchronized Srotas" },
       { layer: "Manomaya Kosha", focus: "Sensory Mind", ideal: 92, actual: 89, status: "Stable Vata Index" },
@@ -356,17 +352,9 @@
       { layer: "Anandamaya Kosha", focus: "Causal Bliss", ideal: 98, actual: 95, status: "Core Baseline Aligned" }
     ];
 
-    evaluatedReportData = {
-      timestamp: new Date().toISOString(),
-      corpusModel: vedaCorpus,
-      facialScanInput: scanMetadata,
-      contextSpatialRadius: { value: radius, unit: unit },
-      comparativeMetrics: koshaMetrics
-    };
-
     // Render Table Rows
     const tableBody = document.querySelector('#comparisonTable tbody');
-    tableBody.innerHTML = koshaMetrics.map(k => `
+    tableBody.innerHTML = currentKoshaMetrics.map(k => `
       <tr>
         <td><strong>${k.layer}</strong></td>
         <td>${k.focus}</td>
@@ -376,18 +364,18 @@
       </tr>
     `).join('');
 
-    // Render Plotly Comparison Chart
+    // Render Plotly Bar Chart
     const traceIdeal = {
-      x: koshaMetrics.map(k => k.layer),
-      y: koshaMetrics.map(k => k.ideal),
+      x: currentKoshaMetrics.map(k => k.layer),
+      y: currentKoshaMetrics.map(k => k.ideal),
       name: 'Ideal Vedic Benchmark',
       type: 'bar',
       marker: { color: '#38bdf8' }
     };
 
     const traceActual = {
-      x: koshaMetrics.map(k => k.layer),
-      y: koshaMetrics.map(k => k.actual),
+      x: currentKoshaMetrics.map(k => k.layer),
+      y: currentKoshaMetrics.map(k => k.actual),
       name: 'Actual Processed Scan Result',
       type: 'bar',
       marker: { color: '#f59e0b' }
@@ -409,17 +397,29 @@
     document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth' });
   });
 
-  // Step 5: Download Comprehensive JSON Sheet
-  btnDownload.addEventListener('click', () => {
-    if (!evaluatedReportData) {
+  // Step 5: Download XLSX Workbook using SheetJS
+  btnDownloadXlsx.addEventListener('click', () => {
+    if (currentKoshaMetrics.length === 0) {
       alert("Please run an evaluation first.");
       return;
     }
-    const blob = new Blob([JSON.stringify(evaluatedReportData, null, 2)], { type: "application/json" });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `sastra-dhaara-comparative-sheet-${Date.now()}.json`;
-    a.click();
+
+    // Map table data into spreadsheet format rows
+    const sheetData = currentKoshaMetrics.map(k => ({
+      "Kosha Layer": k.layer,
+      "Vedic Domain Focus": k.focus,
+      "Ideal Benchmark Score": k.ideal,
+      "Processed Scan Result Score": k.actual,
+      "Variance / Status": k.status
+    }));
+
+    // Create SheetJS workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(sheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Pancakosha Analysis");
+
+    // Trigger local Excel file download
+    XLSX.writeFile(workbook, `Sastra-Dhaara-Kosha-Analysis-${Date.now()}.xlsx`);
   });
 </script>
 
