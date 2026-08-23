@@ -453,7 +453,7 @@
     document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth' });
   });
 
-  // Download XLSX Workbook with Explicit Raw Scan vs Vedic Threshold Columns
+  // Download XLSX Workbook using robust explicit browser Blob trigger
   btnDownloadXlsx.addEventListener('click', () => {
     if (currentAnalysisRows.length === 0) {
       alert("Please run an evaluation first.");
@@ -472,7 +472,18 @@
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Raw Scans vs Vedic Thresholds");
 
-    XLSX.writeFile(workbook, `Sastra-Dhaara-Scan-vs-Vedic-Thresholds-${Date.now()}.xlsx`);
+    // Write file using browser-safe blob downloader to bypass sandbox blocks
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+    
+    const downloadUrl = URL.createObjectURL(blob);
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.href = downloadUrl;
+    downloadAnchor.download = `Sastra-Dhaara-Scan-vs-Vedic-Thresholds-${Date.now()}.xlsx`;
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    document.body.removeChild(downloadAnchor);
+    URL.revokeObjectURL(downloadUrl);
   });
 </script>
 
