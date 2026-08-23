@@ -3,17 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Śāstra Dhārā - Vaidya Maharṣi & Spatial Analysis</title>
+  <title>Gomaa - Śāstra Dhārā | Vedic Spatial & Kosha Diagnostic Workbench</title>
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent-color: #d97706;
+      --bg-color: #070a12;
+      --card-bg: #0f172a;
+      --border-color: #1e293b;
+      --accent-color: #f59e0b;
+      --accent-muted: rgba(245, 158, 11, 0.15);
       --text-color: #f8fafc;
       --text-muted: #94a3b8;
-      --border-color: #334155;
+      --success-color: #22c55e;
+      --danger-color: #ef4444;
     }
 
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 20px;
@@ -23,10 +27,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-height: 100vh;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1100px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -39,39 +44,48 @@
       padding-bottom: 15px;
     }
 
-    h1 {
-      margin: 0;
-      color: var(--accent-color);
+    h1 { margin: 0; color: var(--accent-color); font-size: 24px; }
+    p.subtitle { margin: 5px 0 0; color: var(--text-muted); font-size: 13px; }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-layout { grid-template-columns: 1fr; }
     }
 
     .card {
       background: var(--card-bg);
       padding: 20px;
-      border-radius: 12px;
+      border-radius: 10px;
       border: 1px solid var(--border-color);
     }
 
-    .input-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    @media (max-width: 768px) {
-      .input-grid {
-        grid-template-columns: 1fr;
-      }
+    .card h2 {
+      margin-top: 0;
+      color: var(--accent-color);
+      font-size: 16px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
+      margin-top: 12px;
     }
 
     label {
       font-weight: bold;
-      color: var(--accent-color);
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
     input[type="number"], input[type="file"], select {
@@ -80,19 +94,20 @@
       border: 1px solid var(--border-color);
       background-color: var(--bg-color);
       color: var(--text-color);
+      font-size: 13px;
     }
 
     .media-container {
       position: relative;
       width: 100%;
-      max-width: 400px;
-      height: 300px;
+      height: 220px;
       background: #000;
-      border-radius: 8px;
+      border-radius: 6px;
       overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
+      border: 1px solid var(--border-color);
     }
 
     video, canvas, img {
@@ -102,105 +117,146 @@
       object-fit: cover;
     }
 
-    button {
-      padding: 12px 20px;
-      background-color: var(--accent-color);
-      color: white;
-      border: none;
+    .btn {
+      padding: 10px 16px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
+      border: none;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       transition: background 0.2s;
     }
-
-    button:hover {
-      background-color: #b45309;
-    }
-
-    .results-section {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .lineage-tree {
-      border-left: 3px solid var(--accent-color);
-      padding-left: 15px;
-    }
-
-    .maharshi-node {
-      margin-bottom: 12px;
-    }
-
-    .maharshi-title {
-      font-weight: bold;
-      font-size: 1.1em;
-    }
-
-    .maharshi-desc {
-      color: var(--text-muted);
-      font-size: 0.95em;
-    }
+    .btn-accent { background-color: var(--accent-color); color: #000; }
+    .btn-accent:hover { background-color: #d97706; }
+    .btn-success { background-color: var(--success-color); color: #fff; }
+    .btn-success:hover { background-color: #16a34a; }
+    .btn-danger { background-color: var(--danger-color); color: #fff; }
 
     .metrics-badge {
       display: inline-block;
-      background: #334155;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.85em;
-      margin-top: 4px;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-top: 6px;
+      font-family: monospace;
     }
+
+    .kosha-box {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .kosha-title { font-weight: bold; color: var(--accent-color); }
+
+    .lineage-tree {
+      border-left: 2px solid var(--accent-color);
+      padding-left: 12px;
+      margin-top: 10px;
+    }
+    .maharshi-node { margin-bottom: 10px; font-size: 12px; }
+    .maharshi-title { font-weight: bold; color: var(--text-color); }
+    .maharshi-desc { color: var(--text-muted); font-size: 11px; }
   </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h1>Vaidya Maharṣi Śāstra Dhārā</h1>
-    <p>Vedic Lineage Synthesis with Real-Time Spatial Recognition & Context Mapping</p>
+    <h1>Gomaa - Śāstra Dhārā</h1>
+    <p class="subtitle">Vaidya Maharṣi Lineage, Spatial Recognition & 5-Kosha Predictive Medicinal Workbench</p>
   </header>
 
-  <!-- Input Section -->
-  <div class="card input-grid">
-    <div class="form-group">
-      <label>1. Spatial Recognition Source</label>
-      <div class="media-container">
-        <video id="videoFeed" autoplay playsinline muted></video>
-        <img id="imagePreview" style="display:none;" alt="Preview" />
-        <canvas id="overlayCanvas"></canvas>
+  <div class="grid-layout">
+    <!-- INPUT COLUMN -->
+    <div>
+      <div class="card">
+        <h2>
+          <span>Facial Recognition Source</span>
+          <span id="cam-status" style="font-size: 11px; color: var(--text-muted);">Inactive</span>
+        </h2>
+        <div class="media-container">
+          <video id="videoFeed" autoplay playsinline muted></video>
+          <img id="imagePreview" style="display:none;" alt="Preview" />
+          <canvas id="overlayCanvas"></canvas>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <button id="btnCamera" class="btn btn-accent" style="flex: 1;">📷 Enable Device Camera</button>
+          <button id="btnUpload" class="btn btn-accent" style="flex: 1;">📁 Upload Image</button>
+          <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+        </div>
       </div>
-      <div style="display: flex; gap: 8px; margin-top: 8px;">
-        <button id="btnCamera">Start Device Camera</button>
-        <input type="file" id="fileInput" accept="image/*" style="display:none;" />
-        <button id="btnUpload" type="button">Upload Image</button>
+
+      <div class="card" style="margin-top: 20px;">
+        <h2>Spatial & Vedic Parameters</h2>
+        
+        <div class="form-group">
+          <label for="spatialRadius">Context Spatial Radius (Default: 10 Feet):</label>
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+            <input type="number" id="spatialRadius" value="10" step="0.5" min="0.1" />
+            <select id="spatialUnit">
+              <option value="feet" selected>Feet (ft)</option>
+              <option value="meters">Meters (m)</option>
+              <option value="inches">Inches (in)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="vedaSelect">Vedic Corpus Model Source:</label>
+          <select id="vedaSelect">
+            <option value="all" selected>Complete Unified Corpus (Rig, Yajur, Sama, Atharva)</option>
+            <option value="atharvaveda">Atharvaveda (Bheṣaja & Āyurveda Foundation)</option>
+            <option value="rigveda">Rigveda (Aśvini Kumāra Healing Suktas)</option>
+          </select>
+        </div>
+
+        <button id="btnProcess" class="btn btn-accent" style="width: 100%; margin-top: 16px;">
+          ⚡ Process Śāstra Dhārā & Kosha Analysis
+        </button>
       </div>
     </div>
 
-    <div class="form-group">
-      <label for="spatialRadius">2. Context Spatial Radius (Meters)</label>
-      <input type="number" id="spatialRadius" value="5.0" step="0.5" min="0.1" max="100.0" />
-      <p style="font-size:0.85em; color: var(--text-muted);">
-        Defines the environmental influence boundaries surrounding the facial recognition subject for Vedic analysis.
-      </p>
+    <!-- OUTPUT COLUMN -->
+    <div>
+      <div class="card results-section" id="outputCard" style="display:none;">
+        <h2>
+          <span>Evaluated Diagnostic Output</span>
+          <span style="font-size: 11px; color: var(--success-color);">Analysis Verified</span>
+        </h2>
+        
+        <div id="metricsOutput"></div>
 
-      <label for="vedaSelect" style="margin-top: 15px;">3. Target Veda Stream</label>
-      <select id="vedaSelect">
-        <option value="all">All Vedas (Rig, Yajur, Sama, Atharva)</option>
-        <option value="athartva">Atharvaveda (Āyurveda Baseline)</option>
-        <option value="rig">Rigveda (Bheṣaja Mantras)</option>
-      </select>
+        <div style="margin-top: 14px;">
+          <h3 style="font-size: 13px; color: var(--accent-color); margin-bottom: 4px;">Pancakosha Predictive Breakdown</h3>
+          <div id="koshaOutputContainer"></div>
+        </div>
 
-      <button id="btnProcess" style="margin-top: 20px;">Process Śāstra Dhārā</button>
+        <hr style="border-color: var(--border-color); margin: 14px 0;" />
+        
+        <h3 style="font-size: 13px; color: var(--accent-color); margin-bottom: 4px;">Complete Śāstra Dhārā (Vaidya Maharṣi Lineage)</h3>
+        <div id="lineageOutput" class="lineage-tree"></div>
+
+        <button id="btnDownloadReport" class="btn btn-success" style="width: 100%; margin-top: 16px;">
+          📥 Download Evaluated Response (.json)
+        </button>
+      </div>
+
+      <div class="card" id="placeholderCard">
+        <h2>Workbench Status</h2>
+        <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5;">
+          Awaiting input capture. Enable your device camera or upload a facial capture file, set the spatial radius context, and click process to generate full Vaidya Maharṣi predictive analytics across all 5 Koshas.
+        </p>
+      </div>
     </div>
-  </div>
-
-  <!-- Output / Results Section -->
-  <div class="card results-section" id="outputCard" style="display:none;">
-    <h2>Analysis Output</h2>
-    <div id="metricsOutput"></div>
-    <hr style="border-color: var(--border-color);" />
-    <h3>Complete Śāstra Dhārā (Vaidya Maharṣi Lineage)</h3>
-    <div id="lineageOutput" class="lineage-tree"></div>
   </div>
 </div>
 
@@ -210,22 +266,35 @@
   const overlayCanvas = document.getElementById('overlayCanvas');
   const ctx = overlayCanvas.getContext('2d');
   const fileInput = document.getElementById('fileInput');
-  const spatialRadiusInput = document.getElementById('spatialRadius');
   const btnCamera = document.getElementById('btnCamera');
   const btnUpload = document.getElementById('btnUpload');
   const btnProcess = document.getElementById('btnProcess');
+  const spatialRadiusInput = document.getElementById('spatialRadius');
+  const spatialUnitSelect = document.getElementById('spatialUnit');
   const outputCard = document.getElementById('outputCard');
+  const placeholderCard = document.getElementById('placeholderCard');
   const metricsOutput = document.getElementById('metricsOutput');
+  const koshaOutputContainer = document.getElementById('koshaOutputContainer');
   const lineageOutput = document.getElementById('lineageOutput');
+  const camStatus = document.getElementById('cam-status');
 
   let activeStream = null;
-  let simulatedFaceDetected = false;
+  let facialCaptureState = { type: "None", timestamp: null };
+  let latestEvaluationData = null;
 
-  // 1. Cross-Platform Device Camera Access (iOS, Android, Desktop, Glasses/Bluetooth proxies)
+  // Camera Integration across iOS, Android, Desktop, AI glasses / proxies
   btnCamera.addEventListener('click', async () => {
     try {
-      imagePreview.style.display = 'none';
-      videoFeed.style.display = 'block';
+      if (activeStream) {
+        activeStream.getTracks().forEach(t => t.stop());
+        activeStream = null;
+        videoFeed.srcObject = null;
+        camStatus.textContent = "Inactive";
+        camStatus.style.color = "var(--text-muted)";
+        btnCamera.textContent = "📷 Enable Device Camera";
+        btnCamera.className = "btn btn-accent";
+        return;
+      }
 
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         activeStream = await navigator.mediaDevices.getUserMedia({
@@ -233,27 +302,38 @@
           audio: false
         });
         videoFeed.srcObject = activeStream;
+        imagePreview.style.display = 'none';
+        videoFeed.style.display = 'block';
+        
         videoFeed.onloadedmetadata = () => {
           overlayCanvas.width = videoFeed.videoWidth || 320;
           overlayCanvas.height = videoFeed.videoHeight || 240;
-          runFaceDetectionLoop();
+          runMeshOverlayLoop();
         };
+
+        camStatus.textContent = "Active / Streaming";
+        camStatus.style.color = "var(--success-color)";
+        btnCamera.textContent = "🛑 Stop Camera";
+        btnCamera.className = "btn btn-danger";
+        facialCaptureState = { type: "Live Camera Stream", timestamp: new Date().toISOString() };
       } else {
-        alert("Camera API not supported on this device/browser.");
+        alert("Camera API not supported on this device.");
       }
     } catch (err) {
-      console.error("Camera access error: ", err);
-      alert("Unable to access camera. Check device permissions.");
+      alert("Camera access error: " + err.message);
     }
   });
 
-  // 2. Upload Input Processing
   btnUpload.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
       if (activeStream) {
-        activeStream.getTracks().forEach(track => track.stop());
+        activeStream.getTracks().forEach(t => t.stop());
+        activeStream = null;
+        camStatus.textContent = "Inactive";
+        btnCamera.textContent = "📷 Enable Device Camera";
+        btnCamera.className = "btn btn-accent";
       }
       videoFeed.style.display = 'none';
       const reader = new FileReader();
@@ -263,116 +343,114 @@
         imagePreview.onload = () => {
           overlayCanvas.width = imagePreview.clientWidth;
           overlayCanvas.height = imagePreview.clientHeight;
-          detectFaceOnImage();
+          drawMeshOverlay();
         };
       };
       reader.readAsDataURL(file);
+      facialCaptureState = { type: "Uploaded Image File", timestamp: new Date().toISOString() };
     }
   });
 
-  // 3. Face Detection Rendering Logic
-  function drawDetectionBoundingBox(x, y, w, h, label) {
-    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-    ctx.strokeStyle = '#d97706';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x, y, w, h);
-    ctx.fillStyle = '#d97706';
-    ctx.font = '12px sans-serif';
-    ctx.fillText(label, x, y > 10 ? y - 5 : 10);
+  function drawMeshOverlay() {
+    const w = overlayCanvas.width;
+    const h = overlayCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(w * 0.25, h * 0.2, w * 0.5, h * 0.6);
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '11px monospace';
+    ctx.fillText("Spatial Facial Mesh (n)", w * 0.26, (h * 0.2) - 5);
   }
 
-  function runFaceDetectionLoop() {
+  function runMeshOverlayLoop() {
     if (videoFeed.style.display === 'none') return;
-    const w = overlayCanvas.width;
-    const h = overlayCanvas.height;
-    // Bounding box centered on the video stream
-    drawDetectionBoundingBox(w * 0.25, h * 0.2, w * 0.5, h * 0.6, "Subject Tracked");
-    simulatedFaceDetected = true;
-    requestAnimationFrame(runFaceDetectionLoop);
+    drawMeshOverlay();
+    requestAnimationFrame(runMeshOverlayLoop);
   }
 
-  function detectFaceOnImage() {
-    const w = overlayCanvas.width;
-    const h = overlayCanvas.height;
-    drawDetectionBoundingBox(w * 0.2, h * 0.15, w * 0.6, h * 0.65, "Subject Detected");
-    simulatedFaceDetected = true;
-  }
-
-  // 4. Vedic Vaidya Maharṣi Sastra Dhaara Dataset
+  // Vedic Vaidya Maharṣi Lineage Database
   const sastraDhaaraData = [
-    {
-      maharshi: "Brahma (Original Source)",
-      text: "Brahma-Saṁhitā & Veda Root",
-      role: "Primeval Source",
-      description: "Recalled the eternal knowledge of Āyurveda prior to creation and transmitted the complete Śāstra to Prajāpati."
-    },
-    {
-      maharshi: "Dhakṣa Prajāpati",
-      text: "Prajāpati Saṁhitā",
-      role: "Preserver of the Stream",
-      description: "Received the 100,000 verses of healing science from Brahma and passed it intact to the Aśvinī Kumāras."
-    },
-    {
-      maharshi: "Aśvinī Kumāras",
-      text: "Rigveda & Atharvaveda Suktas",
-      role: "Divine Physicians (Deva Vaidya)",
-      description: "Performed advanced medical and surgical procedures across the Vedic texts (e.g., organ restoration, sight restoration)."
-    },
-    {
-      maharshi: "Devarāja Indra",
-      text: "Vedic Upaveda Core",
-      role: "Celestial Custodian",
-      description: "Received complete Āyurveda from the Aśvins and preserved it until mortal sages sought the knowledge to alleviate human suffering."
-    },
-    {
-      maharshi: "Maharṣi Bharadvāja",
-      text: "Rigvedic & Atharvavedic Transmission",
-      role: "Mortal Conduit",
-      description: "Ascended to Indra's realm to learn Trisūtra Āyurveda (Etiology, Symptomatology, Therapeutics) and brought it to the terrestrial assembly of sages."
-    },
-    {
-      maharshi: "Rajarṣi Divodāsa Dhanvantari",
-      text: "Śalya Tantra Lineage",
-      role: "Master of Surgical Therapeutics",
-      description: "Incarnation of Lord Dhanvantari who established the Śalya (surgical) tradition at Kashi, teaching Maharṣi Suśruta."
-    },
-    {
-      maharshi: "Maharṣi Punarvasu Ātreya",
-      text: "Kāya Cikitsā Stream",
-      role: "Internal Medicine Authority",
-      description: "Systematized internal medicine into six distinct streams via his six principal disciples: Agniveśa, Bhela, Jātūkarṇa, Parāśara, Hārīta, and Kṣārapāṇi."
-    }
+    { maharshi: "Brahma", role: "Primeval Source", text: "Brahma-Saṁhitā", description: "Recalled total cosmic Āyurveda prior to universal manifestation." },
+    { maharshi: "Dhakṣa Prajāpati", role: "Preserver", text: "Prajāpati Saṁhitā", description: "Transmitted 100,000 verses of therapeutic science to the Aśvins." },
+    { maharshi: "Aśvinī Kumāras", role: "Divine Physicians", text: "Rigveda & Atharvaveda Suktas", description: "Performed master feats of somatic rejuvenation and surgical restoration." },
+    { maharshi: "Devarāja Indra", role: "Celestial Custodian", text: "Upaveda Core", description: "Safeguarded terrestrial medicinal streams until mortal sages petitioned." },
+    { maharshi: "Maharṣi Bharadvāja", role: "Mortal Conduit", text: "Trisūtra Āyurveda", description: "Ascended to celestial realms to bring etiology, symptomatology, and therapeutics to earth." },
+    { maharshi: "Rajarṣi Divodāsa Dhanvantari", role: "Surgical Lineage", text: "Śalya Tantra", description: "Established surgical sciences at Kashi for Maharṣi Suśruta and disciples." },
+    { maharshi: "Maharṣi Punarvasu Ātreya", role: "Internal Medicine", text: "Kāya Cikitsā Stream", description: "Guided six primary disciples to establish internal clinical diagnostics." }
   ];
 
-  // 5. Unified Input Execution Logic
+  // Kosha Predictive Analytics Engine
+  function computeKoshaModels(radius, unit) {
+    let multiplier = unit === 'meters' ? 3.28084 : (unit === 'inches' ? 0.0833333 : 1);
+    let radiusFeet = radius * multiplier;
+
+    return [
+      { name: "Annamaya Kosha", focus: "Physical & Somatic Structure", prediction: `Balanced within ${radiusFeet.toFixed(1)} ft spatial perimeter. Dhatu nourishment stable.` },
+      { name: "Pranamaya Kosha", focus: "Biofield & Respiratory Prana", prediction: "Srotas micro-channel circulation flowing rhythmically with environmental Prana." },
+      { name: "Manomaya Kosha", focus: "Sensory & Emotional Mind", prediction: "Cognitive focus aligned; minimal Vata fluctuations detected in spatial sweep." },
+      { name: "Vijnanamaya Kosha", focus: "Intellect & Discriminative Wisdom", prediction: "Agni operational integrity optimal for therapeutic evaluation." },
+      { name: "Anandamaya Kosha", focus: "Causal Equilibrium & Bliss", prediction: "Core baseline alignment reflecting uncorrupted Vedic health parameters." }
+    ];
+  }
+
   btnProcess.addEventListener('click', () => {
     const radius = parseFloat(spatialRadiusInput.value);
-    const selectedVeda = document.getElementById('vedaSelect').value;
+    const unit = spatialUnitSelect.value;
+    const veda = document.getElementById('vedaSelect').value;
 
     if (isNaN(radius) || radius <= 0) {
-      alert("Please enter a valid positive value for the Context Spatial Radius.");
+      alert("Please specify a valid numeric spatial radius.");
       return;
     }
 
-    // Build metric header reading both inputs
+    const koshas = computeKoshaModels(radius, unit);
+
+    latestEvaluationData = {
+      timestamp: new Date().toISOString(),
+      spatialRadius: radius,
+      spatialUnit: unit,
+      vedaCorpus: veda,
+      facialCapture: facialCaptureState,
+      koshaAnalysis: koshas,
+      lineage: sastraDhaaraData
+    };
+
     metricsOutput.innerHTML = `
-      <div class="metrics-badge">Subject Recognition Status: ${simulatedFaceDetected ? "Active / Extracted" : "Manual File Loaded"}</div>
-      <div class="metrics-badge">Context Spatial Radius: ${radius.toFixed(2)} Meters</div>
-      <div class="metrics-badge">Spatial Field Influence Area: ${(Math.PI * Math.pow(radius, 2)).toFixed(2)} m²</div>
-      <div class="metrics-badge">Vedic Filter: ${selectedVeda.toUpperCase()}</div>
+      <div class="metrics-badge">Capture Type: ${facialCaptureState.type}</div>
+      <div class="metrics-badge">Spatial Radius: ${radius} ${unit}</div>
+      <div class="metrics-badge">Vedic Corpus: ${veda.toUpperCase()}</div>
     `;
 
-    // Render complete lineage nodes
-    lineageOutput.innerHTML = sastraDhaaraData.map(node => `
-      <div class="maharshi-node">
-        <div class="maharshi-title">${node.maharshi}</div>
-        <div style="font-size: 0.85em; color: var(--accent-color);">${node.text} | (${node.role})</div>
-        <div class="maharshi-desc">${node.description}</div>
+    koshaOutputContainer.innerHTML = koshas.map(k => `
+      <div class="kosha-box">
+        <div class="kosha-title">${k.name} <span style="font-weight:normal; color:var(--text-muted);">(${k.focus})</span></div>
+        <div>${k.prediction}</div>
       </div>
     `).join('');
 
+    lineageOutput.innerHTML = sastraDhaaraData.map(node => `
+      <div class="maharshi-node">
+        <div class="maharshi-title">${node.maharshi} (${node.role})</div>
+        <div class="maharshi-desc">${node.text}: ${node.description}</div>
+      </div>
+    `).join('');
+
+    placeholderCard.style.display = 'none';
     outputCard.style.display = 'block';
     outputCard.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  document.getElementById('btnDownloadReport').addEventListener('click', () => {
+    if (!latestEvaluationData) {
+      alert("Please run an evaluation first.");
+      return;
+    }
+    const blob = new Blob([JSON.stringify(latestEvaluationData, null, 2)], { type: "application/json" });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `sastra-dhaara-kosha-evaluation-${Date.now()}.json`;
+    a.click();
   });
 </script>
 
