@@ -391,7 +391,10 @@
       { parameter: "Blood Levels (Hemoglobin/RBC)", source: "Optical Pallor & Sclera Analysis", ideal: "14.0 g/dL", actual: "13.8 g/dL", status: "Rakta Dhatu Optimal" },
       { parameter: "Spleen & Liver Dynamics", source: "Sub-surface Optical Index", ideal: "Stable Bio-Marker", actual: "Normal Visceral Resonance", status: "Pachaka Pitta Synchronized" },
       { parameter: "Pancreas & Gut Function", source: "Metabolic Scan & Report Synthesis", ideal: "Optimal Enzymatic Flow", actual: "Samana Vata Active", status: "Agni Balanced" },
-      { parameter: "Thyroid & Neural / EEG Index", source: "Cervical & Micro-Expression Dynamics", ideal: "Harmonious Rate", actual: "Stable Neuro-Vata Index", status: "Vijnanamaya Aligned" }
+      // --- NERVOUS SYSTEM PARAMETERS ---
+      { parameter: "Heart Rate Variability (HRV)", source: "rPPG Pulse Wave Interval Analysis", ideal: "> 50 ms (RMSSD)", actual: "58 ms (RMSSD)", status: "High Autonomic Resilience" },
+      { parameter: "Sympathetic/Parasympathetic Tone", source: "Micro-Expression & Vasomotor Scan", ideal: "Balanced Equilibrium", actual: "Parasympathetic Dominant", status: "Calm / Prana Aligned" },
+      { parameter: "Vagal Tone & Neural Index", source: "Cervical & Ocular Micro-Dynamics", ideal: "Optimal Vagal Flow", actual: "Stable Regulation", status: "Vijnanamaya Harmonized" }
     ];
 
     // Render Table Rows
@@ -409,11 +412,13 @@
     // Render Plotly Bar Chart (Mapping normalized values for visual comparison)
     const chartParams = [
       "Blood Pressure", "Blood Sugar", "Temperature", "Purity/Complexion", 
-      "Nourishment", "Blood Levels", "Spleen & Liver", "Pancreas & Gut", "Thyroid & Neural"
+      "Nourishment", "Blood Levels", "Spleen/Liver", "Pancreas/Gut", 
+      "HRV (Nervous)", "ANS Balance", "Vagal Tone"
     ];
+    
     const traceIdeal = {
       x: chartParams,
-      y: [100, 95, 98, 100, 100, 96, 95, 95, 98],
+      y: [100, 95, 98, 100, 100, 96, 95, 95, 95, 95, 98],
       name: 'Ideal Vedic Benchmark',
       type: 'bar',
       marker: { color: '#38bdf8' }
@@ -421,7 +426,7 @@
 
     const traceActual = {
       x: chartParams,
-      y: [98, 92, 97, 95, 96, 94, 93, 94, 96],
+      y: [98, 92, 97, 95, 96, 94, 93, 94, 96, 92, 96],
       name: 'Processed Biometric Result',
       type: 'bar',
       marker: { color: '#f59e0b' }
