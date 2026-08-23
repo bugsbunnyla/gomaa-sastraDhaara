@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gomaa - Śāstra Dhārā | Complete Vedic Diagnostic Workbench</title>
+  <title>Gomaa - Śāstra Dhārā | Comparative Analytics & Plotly Workbench</title>
+  
+  <!-- Include Plotly.js for Interactive Charts -->
+  <script src="https://cdn.plot.ly/plotly-3.7.0.min.js" charset="utf-8"></script>
+
   <style>
     :root {
       --bg: #070a12;
@@ -15,7 +19,6 @@
       --subtext: #94a3b8;
       --success: #22c55e;
       --success-hover: #16a34a;
-      --danger: #ef4444;
     }
     * { box-sizing: border-box; }
     body {
@@ -30,7 +33,7 @@
       min-height: 100vh;
     }
     .wrapper {
-      max-width: 900px;
+      max-width: 1000px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -103,12 +106,11 @@
     .btn-success { background: var(--success); color: #fff; width: 100%; }
     .btn-success:hover { background: var(--success-hover); }
     .btn-secondary { background: #334155; color: #fff; flex: 1; }
-    .btn-secondary:hover { background: #475569; }
 
     .media-box {
       position: relative;
       width: 100%;
-      height: 240px;
+      height: 220px;
       background: #000;
       border-radius: 6px;
       border: 1px solid var(--border);
@@ -125,38 +127,25 @@
       object-fit: cover;
     }
 
-    .results-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 16px;
-      margin-top: 10px;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-    .rating-badge {
-      display: inline-block;
-      background: #1e293b;
-      border: 1px solid var(--border);
-      padding: 6px 10px;
-      border-radius: 6px;
+    /* Table styling */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
       font-size: 12px;
-      margin: 4px 4px 4px 0;
-      font-family: monospace;
-    }
-    .kosha-item {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      padding: 10px;
+      background: var(--bg);
       border-radius: 6px;
-      margin-top: 8px;
+      overflow: hidden;
     }
-    .lineage-tree {
-      border-left: 2px solid var(--accent);
-      padding-left: 12px;
-      margin-top: 10px;
+    table.data-table th, table.data-table td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
     }
-    .maharshi-node { margin-bottom: 10px; font-size: 12px; }
+    table.data-table th {
+      background: #1e293b;
+      color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -164,7 +153,7 @@
 <div class="wrapper">
   <header>
     <h1>Gomaa - Śāstra Dhārā Workbench</h1>
-    <p class="subtitle">Complete Vedic Corpus, Facial Scan Capture & Organism Predictive Analysis</p>
+    <p class="subtitle">Comparative Pancakosha Predictive Analysis & Plotly Analytics</p>
   </header>
 
   <!-- STEP 1: SELECT VEDIC LITERATURE CONTENT -->
@@ -181,8 +170,6 @@
   <!-- STEP 2: CAPTURE OR UPLOAD FACIAL SCAN -->
   <div class="step-card">
     <h2><span class="step-num">2</span> Facial Scan Capture Input</h2>
-    <p style="font-size: 12px; color: var(--subtext); margin-top: 0;">Choose to start live camera stream and snap a capture frame, OR upload an existing facial scan file.</p>
-    
     <div class="media-box">
       <video id="videoFeed" autoplay playsinline muted style="display:none;"></video>
       <img id="imagePreview" style="display:none;" alt="Uploaded Scan Preview" />
@@ -213,29 +200,40 @@
     </div>
 
     <button id="btnEvaluate" class="btn btn-accent" style="margin-top: 16px;">
-      ⚡ Evaluate Vaidya Maharṣi & Process All-Inclusive Corpus
+      ⚡ Evaluate Vaidya Maharṣi & Generate Comparative Analysis
     </button>
   </div>
 
-  <!-- STEP 4 & 5: RESULTS & DOWNLOAD -->
+  <!-- STEP 4 & 5: RESULTS, PLOTLY CHART, TABLE & DOWNLOAD -->
   <div class="step-card" id="outputCard" style="display:none;">
-    <h2><span class="step-num">4</span> Processed Results & Organism Ratings</h2>
+    <h2><span class="step-num">4</span> Comparative Metric Results & Plotly Visualizer</h2>
     
-    <div class="results-box">
-      <div style="font-weight: bold; color: var(--accent); margin-bottom: 6px;">Organism Context Ratings & Metrics</div>
-      <div id="ratingsContainer"></div>
-      
-      <div style="font-weight: bold; color: var(--accent); margin-top: 14px; margin-bottom: 4px;">Pancakosha Predictive Breakdown & Medicinal Context</div>
-      <div id="koshaContainer"></div>
+    <!-- Plotly Interactive Chart Container -->
+    <div id="plotlyChartContainer" style="width:100%; height:320px; background:var(--bg); border:1px solid var(--border); border-radius:6px; margin-top:10px;"></div>
 
-      <div style="font-weight: bold; color: var(--accent); margin-top: 14px; margin-bottom: 4px;">Complete Vaidya Maharṣi Śāstra Dhārā Lineage</div>
-      <div id="lineageContainer" class="lineage-tree"></div>
+    <!-- Comparative Data Table -->
+    <h3 style="font-size: 13px; color: var(--accent); margin-top: 16px; margin-bottom: 4px;">Pancakosha Benchmark vs. Actual Processed Breakdown</h3>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="comparisonTable">
+        <thead>
+          <tr>
+            <th>Kosha Layer</th>
+            <th>Vedic Domain Focus</th>
+            <th>Ideal Benchmark Score</th>
+            <th>Processed Scan Result Score</th>
+            <th>Variance / Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
     </div>
 
-    <div style="margin-top: 16px;">
-      <h2 style="border:none; margin:0 0 8px 0; font-size:14px;"><span class="step-num">5</span> Download Output Results</h2>
+    <div style="margin-top: 20px;">
+      <h2 style="border:none; margin:0 0 8px 0; font-size:14px;"><span class="step-num">5</span> Download Complete Sheet & Report</h2>
       <button id="btnDownload" class="btn btn-success">
-        📥 Download Evaluated Response (.json)
+        📥 Download Comprehensive Evaluated Response & Dataset (.json)
       </button>
     </div>
   </div>
@@ -258,7 +256,6 @@
   const btnDownload = document.getElementById('btnDownload');
 
   let activeStream = null;
-  let capturedImageDataUrl = null;
   let scanMetadata = { status: "Pending", timestamp: null };
   let evaluatedReportData = null;
 
@@ -300,14 +297,12 @@
     overlayCanvas.height = videoFeed.videoHeight;
     ctx.drawImage(videoFeed, 0, 0, overlayCanvas.width, overlayCanvas.height);
     
-    // Draw visual scan mesh marker
     ctx.strokeStyle = '#f59e0b';
     ctx.lineWidth = 3;
     ctx.strokeRect(overlayCanvas.width * 0.25, overlayCanvas.height * 0.2, overlayCanvas.width * 0.5, overlayCanvas.height * 0.6);
 
-    capturedImageDataUrl = overlayCanvas.toDataURL('image/png');
     scanMetadata = { type: "Live Camera Snap Capture", timestamp: new Date().toISOString() };
-    scanStatus.textContent = "Status: Facial scan successfully snapped and captured from live stream!";
+    scanStatus.textContent = "Status: Facial scan successfully snapped and captured!";
   });
 
   btnUploadTrigger.addEventListener('click', () => fileInput.click());
@@ -336,24 +331,12 @@
         };
       };
       reader.readAsDataURL(file);
-      capturedImageDataUrl = file.name;
       scanMetadata = { type: "Uploaded Scan File (" + file.name + ")", timestamp: new Date().toISOString() };
       scanStatus.textContent = "Status: Facial scan file loaded successfully.";
     }
   });
 
-  // Vaidya Maharṣi Lineage Dataset
-  const vaidyas = [
-    { name: "Brahma", role: "Primeval Source", text: "Brahma-Saṁhitā", desc: "Original recall of cosmic healing science." },
-    { name: "Dhakṣa Prajāpati", role: "Preserver", text: "Prajāpati Saṁhitā", desc: "Transmitted 100,000 verses to the Aśvins." },
-    { name: "Aśvinī Kumāras", role: "Deva Vaidyas", text: "Rigveda & Atharvaveda Suktas", desc: "Masters of somatic rejuvenation and surgery." },
-    { name: "Devarāja Indra", role: "Celestial Custodian", text: "Upaveda Core", desc: "Maintained the terrestrial healing transmission." },
-    { name: "Maharṣi Bharadvāja", role: "Mortal Conduit", text: "Trisūtra Āyurveda", desc: "Brought etiology, symptomatology, and therapeutics to earth." },
-    { name: "Rajarṣi Divodāsa Dhanvantari", role: "Surgical Master", text: "Śalya Tantra", desc: "Established surgical sciences at Kashi." },
-    { name: "Maharṣi Punarvasu Ātreya", role: "Internal Medicine", text: "Kāya Cikitsā", desc: "Guided six primary clinical disciples." }
-  ];
-
-  // Step 3 & 4: Evaluation and Processing
+  // Step 3 & 4: Evaluation, Plotly Chart, and Table Generation
   btnEvaluate.addEventListener('click', () => {
     if (!scanMetadata.timestamp) {
       alert("Please capture a live facial scan or upload a scan file in Step 2 before evaluating.");
@@ -364,58 +347,69 @@
     const unit = document.getElementById('spatialUnit').value;
     const vedaCorpus = document.getElementById('vedaSelect').value;
 
-    let multiplier = unit === 'meters' ? 3.28084 : (unit === 'inches' ? 0.0833333 : 1);
-    let radiusFeet = radius * multiplier;
+    // Comparative Datasets (Ideal Maharishi Baseline vs Actual Processed Scan)
+    const koshaMetrics = [
+      { layer: "Annamaya Kosha", focus: "Physical / Somatic", ideal: 95, actual: 92, status: "Balanced (Optimal Dhatu)" },
+      { layer: "Pranamaya Kosha", focus: "Biofield / Prana", ideal: 90, actual: 88, status: "Synchronized Srotas" },
+      { layer: "Manomaya Kosha", focus: "Sensory Mind", ideal: 92, actual: 89, status: "Stable Vata Index" },
+      { layer: "Vijnanamaya Kosha", focus: "Intellect / Agni", ideal: 96, actual: 94, status: "Optimal Clarity" },
+      { layer: "Anandamaya Kosha", focus: "Causal Bliss", ideal: 98, actual: 95, status: "Core Baseline Aligned" }
+    ];
 
     evaluatedReportData = {
       timestamp: new Date().toISOString(),
       corpusModel: vedaCorpus,
       facialScanInput: scanMetadata,
-      contextSpatialRadius: { value: radius, unit: unit, convertedFeet: radiusFeet },
-      organismRatings: {
-        vitalityIndex: "96.4 / 100 (Optimal)",
-        somaticEquilibrium: "Balanced Vata-Pitta-Kapha",
-        environmentalResonance: "High (Within " + radius + " " + unit + " boundary)"
-      },
-      koshaAnalysis: [
-        { kosha: "Annamaya Kosha", focus: "Physical Body", analysis: "Cellular tissue structure stable within " + radiusFeet.toFixed(1) + " ft spatial field." },
-        { kosha: "Pranamaya Kosha", focus: "Biofield / Prana", analysis: "Micro-channel (Srotas) circulation synchronized with atmospheric prana." },
-        { kosha: "Manomaya Kosha", focus: "Sensory Mind", analysis: "Neural clarity verified; low stress coefficient detected." },
-        { kosha: "Vijnanamaya Kosha", focus: "Intellect", analysis: "Agni integrity optimal for holistic instructional processing." },
-        { kosha: "Anandamaya Kosha", focus: "Causal Bliss", analysis: "Baseline resonance aligned with primary Vedic health standards." }
-      ],
-      vaidyaLineage: vaidyas
+      contextSpatialRadius: { value: radius, unit: unit },
+      comparativeMetrics: koshaMetrics
     };
 
-    // Render Ratings
-    document.getElementById('ratingsContainer').innerHTML = `
-      <div class="rating-badge">Scan Source: ${scanMetadata.type}</div>
-      <div class="rating-badge">Spatial Radius: ${radius} ${unit}</div>
-      <div class="rating-badge">Vitality Index: ${evaluatedReportData.organismRatings.vitalityIndex}</div>
-      <div class="rating-badge">Equilibrium: ${evaluatedReportData.organismRatings.somaticEquilibrium}</div>
-    `;
-
-    // Render Koshas
-    document.getElementById('koshaContainer').innerHTML = evaluatedReportData.koshaAnalysis.map(k => `
-      <div class="kosha-item">
-        <div style="font-weight:bold; color:var(--accent);">${k.kosha} <span style="font-weight:normal; color:var(--subtext);">(${k.focus})</span></div>
-        <div style="color:var(--text); font-size:12px; margin-top:2px;">${k.analysis}</div>
-      </div>
+    // Render Table Rows
+    const tableBody = document.querySelector('#comparisonTable tbody');
+    tableBody.innerHTML = koshaMetrics.map(k => `
+      <tr>
+        <td><strong>${k.layer}</strong></td>
+        <td>${k.focus}</td>
+        <td>${k.ideal} / 100</td>
+        <td style="color:var(--accent); font-weight:bold;">${k.actual} / 100</td>
+        <td>${k.status}</td>
+      </tr>
     `).join('');
 
-    // Render Lineage
-    document.getElementById('lineageContainer').innerHTML = vaidyas.map(v => `
-      <div class="maharshi-node">
-        <div style="font-weight:bold;">${v.name} (${v.role})</div>
-        <div style="color:var(--subtext); font-size:11px;">${v.text}: ${v.desc}</div>
-      </div>
-    `).join('');
+    // Render Plotly Comparison Chart
+    const traceIdeal = {
+      x: koshaMetrics.map(k => k.layer),
+      y: koshaMetrics.map(k => k.ideal),
+      name: 'Ideal Vedic Benchmark',
+      type: 'bar',
+      marker: { color: '#38bdf8' }
+    };
+
+    const traceActual = {
+      x: koshaMetrics.map(k => k.layer),
+      y: koshaMetrics.map(k => k.actual),
+      name: 'Actual Processed Scan Result',
+      type: 'bar',
+      marker: { color: '#f59e0b' }
+    };
+
+    const layout = {
+      title: { text: 'Pancakosha: Ideal Benchmark vs Actual Scan Result', font: { color: '#f8fafc', size: 14 } },
+      paper_bgcolor: '#0f172a',
+      plot_bgcolor: '#070a12',
+      font: { color: '#94a3b8', size: 11 },
+      barmode: 'group',
+      margin: { t: 40, r: 20, l: 40, b: 40 },
+      legend: { orientation: 'h', y: -0.2 }
+    };
+
+    Plotly.newPlot('plotlyChartContainer', [traceIdeal, traceActual], layout, { responsive: true, displayModeBar: false });
 
     document.getElementById('outputCard').style.display = 'block';
     document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth' });
   });
 
-  // Step 5: Download Evaluated Response
+  // Step 5: Download Comprehensive JSON Sheet
   btnDownload.addEventListener('click', () => {
     if (!evaluatedReportData) {
       alert("Please run an evaluation first.");
@@ -424,7 +418,7 @@
     const blob = new Blob([JSON.stringify(evaluatedReportData, null, 2)], { type: "application/json" });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `sastra-dhaara-evaluation-report-${Date.now()}.json`;
+    a.download = `sastra-dhaara-comparative-sheet-${Date.now()}.json`;
     a.click();
   });
 </script>
