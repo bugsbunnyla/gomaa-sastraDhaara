@@ -202,7 +202,7 @@ function fft(re, im, invert) {
 function np2(n) { return Math.pow(2, Math.ceil(Math.log2(n))); }
 
 // ========================================================================
-// 1. REAL RPPG ENGINE (CHROM + FFT + Peak Detection)
+// 1. REAL RPPG ENGINE (CHROM + FFT + Robust Peak Detection)
 // ========================================================================
 class RppgEngine {
   constructor(fps, sec) {
@@ -225,49 +225,216 @@ class RppgEngine {
     return true;
   }
   full() { return this.idx >= this.target; }
+
   compute() {
     const m = this.idx;
-    if (m < 30) return { error: "Insufficient samples. Record at least 1 second." };
+    if (m < 60) return { error: "Insufficient samples. Record at least 2 seconds." };
     const n = this.N;
     const rM = this.r.slice(0, m).reduce((a, b) => a + b, 0) / m;
     const gM = this.g.slice(0, m).reduce((a, b) => a + b, 0) / m;
     const bM = this.b.slice(0, m).reduce((a, b) => a + b, 0) / m;
+
+    // CHROM projection
     const pulse = new Float64Array(n);
     for (let i = 0; i < m; i++) pulse[i] = 3 * (this.g[i] / gM) - 2 * (this.r[i] / rM) - (this.b[i] / bM);
+
+    // Detrend + Hann window to reduce spectral leakage
     const det = this.detrend(pulse, m);
+    const win = this.hannWindow(m);
+    for (let i = 0; i < m; i++) det[i] *= win[i];
+
+    // FFT
     const re = Array.from(det), im = new Array(n).fill(0);
     fft(re, im, false);
-    const df = this.fps / n, lo = Math.floor(0.7 / df), hi = Math.ceil(4.0 / df);
-    for (let i = 0; i < n; i++) { if (i < lo || i > hi) { re[i] = 0; im[i] = 0; } if (i > 0 && i < n - i) { re[n - i] = 0; im[n - i] = 0; } }
-    fft(re, im, true);
-    const filt = re.map(v => v);
-    let maxM = 0, peakB = 0;
-    for (let i = lo; i <= hi; i++) { const mag = Math.sqrt(re[i] * re[i] + im[i] * im[i]); if (mag > maxM) { maxM = mag; peakB = i; } }
-    const bpm = Math.round(peakB * df * 60);
-    const peaks = this.findPeaks(filt.slice(0, m), this.fps);
-    const rmssd = this.calcRMSSD(peaks);
+
+    const df = this.fps / n;
+    const lo = Math.floor(0.5 / df), hi = Math.ceil(4.0 / df); // 30-240 BPM
+
+    // Compute magnitude spectrum
+    const mag = new Float64Array(n);
+    for (let i = 0; i < n; i++) mag[i] = Math.sqrt(re[i]*re[i] + im[i]*im[i]);
+
+    // ROBUST PEAK DETECTION: find peaks with prominence in cardiac band
+    const peaks = this.findSpectralPeaks(mag, lo, hi, df);
+    let bpm = 0, peakBin = 0, maxM = 0;
+
+    if (peaks.length > 0) {
+      // Prefer peak with harmonic support (2nd harmonic visible)
+      let best = peaks[0];
+      for (const p of peaks) {
+        const h2 = Math.round(p.bin * 2);
+        const hasHarmonic = h2 < hi && mag[h2] > mag[p.bin] * 0.15;
+        if (hasHarmonic && p.prominence > best.prominence * 0.5) best = p;
+      }
+      bpm = Math.round(best.freq * 60);
+      peakBin = best.bin;
+      maxM = best.mag;
+    } else {
+      // Fallback: simple max
+      for (let i = lo; i <= hi; i++) { if (mag[i] > maxM) { maxM = mag[i]; peakBin = i; } }
+      bpm = Math.round(peakBin * df * 60);
+    }
+
+    // Clamp and time-domain cross-check
+    bpm = Math.max(40, Math.min(200, bpm));
+
+    // Bandpass filter for time-domain analysis (0.5-4.0 Hz = 30-240 BPM)
+    const filtRe = Array.from(det), filtIm = new Array(n).fill(0);
+    fft(filtRe, filtIm, false);
+    for (let i = 0; i < n; i++) {
+      if (i < lo || i > hi) { filtRe[i] = 0; filtIm[i] = 0; }
+      if (i > 0 && i < n - i) { filtRe[n-i] = 0; filtIm[n-i] = 0; }
+    }
+    fft(filtRe, filtIm, true);
+    const filt = filtRe.map(v => v);
+
+    // Time-domain peak detection for HRV
+    const tPeaks = this.findPeaks(filt.slice(0, m), this.fps);
+    const tdBpm = Math.round(tPeaks.length / (m / this.fps) * 60);
+
+    // If FFT and time-domain disagree by >15 BPM, trust time-domain (more robust)
+    if (Math.abs(bpm - tdBpm) > 15 && tPeaks.length >= 3) {
+      bpm = tdBpm;
+      peakBin = Math.round((bpm / 60) / df);
+      maxM = mag[peakBin] || maxM;
+    }
+
+    const rmssd = this.calcRMSSD(tPeaks);
+
+    // Respiratory rate: envelope + FFT in 0.1-0.5 Hz
     const env = this.envelope(det, m);
     const eRe = Array.from(env), eIm = new Array(n).fill(0);
     fft(eRe, eIm, false);
+    const eMag = new Float64Array(n);
+    for (let i = 0; i < n; i++) eMag[i] = Math.sqrt(eRe[i]*eRe[i] + eIm[i]*eIm[i]);
     const rLo = Math.floor(0.1 / df), rHi = Math.ceil(0.5 / df);
-    let rMax = 0, rPeak = 0;
-    for (let i = rLo; i <= rHi; i++) { const mag = Math.sqrt(eRe[i] * eRe[i] + eIm[i] * eIm[i]); if (mag > rMax) { rMax = mag; rPeak = i; } }
-    const rr = Math.round(rPeak * df * 60);
+    const rPeaks = this.findSpectralPeaks(eMag, rLo, rHi, df);
+    let rr = 16;
+    if (rPeaks.length > 0) {
+      rr = Math.round(rPeaks[0].freq * 60);
+    } else {
+      let rMax = 0, rPeak = 0;
+      for (let i = rLo; i <= rHi; i++) { if (eMag[i] > rMax) { rMax = eMag[i]; rPeak = i; } }
+      rr = Math.round(rPeak * df * 60);
+    }
+    rr = Math.max(8, Math.min(30, rr));
+
+    // Signal quality: spectral purity ratio
     let tot = 0, band = 0;
-    for (let i = 1; i < n / 2; i++) { const mag = Math.sqrt(re[i] * re[i] + im[i] * im[i]); tot += mag; if (i >= lo && i <= hi) band += mag; }
+    for (let i = 1; i < n / 2; i++) { tot += mag[i]; if (i >= lo && i <= hi) band += mag[i]; }
     const sq = tot > 0 ? Math.round((band / tot) * 100) : 0;
+
+    // Motion artifact rejection: if signal variance is too high, reduce SQ
+    const sigVar = this.variance(det, m);
+    const adjSq = sigVar > 0.5 ? Math.round(sq * 0.6) : sq;
+
     const pulseAmp = maxM;
     const riseTime = this.calcRiseTime(filt, m, this.fps);
-    const specEnt = this.spectralEntropy(re, im, lo, hi);
-    this.res = { bpm: Math.max(40, Math.min(200, bpm)), rmssd, rr: Math.max(6, Math.min(40, rr)), sq: Math.min(100, sq), peaks: peaks.length, dur: m / this.fps, features: { hr: bpm, hrv: rmssd, rr, sq, pulseAmp, riseTime, specEnt } };
+    const specEnt = this.spectralEntropy(mag, lo, hi);
+
+    this.res = {
+      bpm, rmssd, rr, sq: Math.min(100, adjSq),
+      peaks: tPeaks.length, dur: m / this.fps,
+      features: { hr: bpm, hrv: rmssd, rr, sq: adjSq, pulseAmp, riseTime, specEnt }
+    };
     return this.res;
   }
-  detrend(s, len) { let sx = 0, sy = 0, sxy = 0, sx2 = 0; for (let i = 0; i < len; i++) { sx += i; sy += s[i]; sxy += i * s[i]; sx2 += i * i; } const slope = (len * sxy - sx * sy) / (len * sx2 - sx * sx), inter = (sy - slope * sx) / len; const o = new Float64Array(s.length); for (let i = 0; i < len; i++) o[i] = s[i] - (slope * i + inter); return o; }
-  findPeaks(sig, fps) { const p = [], md = Math.floor(fps * 0.4); let lp = -md; for (let i = 1; i < sig.length - 1; i++) if (sig[i] > sig[i - 1] && sig[i] > sig[i + 1] && sig[i] > 0) { if (i - lp >= md) { p.push(i / fps); lp = i; } } return p; }
-  calcRMSSD(peaks) { if (peaks.length < 3) return 0; const iv = []; for (let i = 1; i < peaks.length; i++) iv.push(peaks[i] - peaks[i - 1]); let ss = 0; for (let i = 1; i < iv.length; i++) { const d = iv[i] - iv[i - 1]; ss += d * d; } return Math.round(Math.sqrt(ss / (iv.length - 1)) * 1000); }
-  envelope(sig, len) { const o = new Float64Array(sig.length); const w = Math.floor(this.fps * 2); for (let i = 0; i < len; i++) { let s = 0, c = 0; for (let j = Math.max(0, i - w); j <= Math.min(len - 1, i + w); j++) { s += Math.abs(sig[j]); c++; } o[i] = s / c; } return o; }
-  calcRiseTime(sig, len, fps) { let rt = 0, c = 0; for (let i = 1; i < len; i++) if (sig[i] > sig[i - 1]) { rt += (sig[i] - sig[i - 1]); c++; } return c > 0 ? rt / c : 0; }
-  spectralEntropy(re, im, lo, hi) { let e = 0, t = 0; for (let i = lo; i <= hi; i++) { const m = re[i] * re[i] + im[i] * im[i]; t += m; } if (t === 0) return 0; for (let i = lo; i <= hi; i++) { const m = re[i] * re[i] + im[i] * im[i]; if (m > 0) { const p = m / t; e -= p * Math.log2(p); } } return e; }
+
+  detrend(s, len) {
+    let sx = 0, sy = 0, sxy = 0, sx2 = 0;
+    for (let i = 0; i < len; i++) { sx += i; sy += s[i]; sxy += i * s[i]; sx2 += i * i; }
+    const denom = len * sx2 - sx * sx;
+    const slope = denom !== 0 ? (len * sxy - sx * sy) / denom : 0;
+    const inter = (sy - slope * sx) / len;
+    const o = new Float64Array(s.length);
+    for (let i = 0; i < len; i++) o[i] = s[i] - (slope * i + inter);
+    return o;
+  }
+
+  hannWindow(len) {
+    const w = new Float64Array(len);
+    for (let i = 0; i < len; i++) w[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (len - 1)));
+    return w;
+  }
+
+  findSpectralPeaks(mag, lo, hi, df) {
+    const peaks = [];
+    for (let i = lo + 1; i < hi; i++) {
+      if (mag[i] > mag[i-1] && mag[i] > mag[i+1]) {
+        const left = Math.max(lo, i - 3);
+        const right = Math.min(hi, i + 3);
+        let localMin = mag[i];
+        for (let j = left; j <= right; j++) if (mag[j] < localMin) localMin = mag[j];
+        const prom = mag[i] - localMin;
+        const band = [];
+        for (let j = lo; j <= hi; j++) band.push(mag[j]);
+        band.sort((a,b) => a-b);
+        const med = band[Math.floor(band.length/2)];
+        if (prom > med * 1.5 && mag[i] > med * 3) {
+          peaks.push({ bin: i, freq: i * df, mag: mag[i], prominence: prom });
+        }
+      }
+    }
+    peaks.sort((a,b) => b.prominence - a.prominence);
+    return peaks;
+  }
+
+  findPeaks(sig, fps) {
+    const p = [], md = Math.floor(fps * 0.35);
+    let lp = -md;
+    for (let i = 1; i < sig.length - 1; i++) {
+      if (sig[i] > sig[i-1] && sig[i] > sig[i+1] && sig[i] > 0) {
+        if (i - lp >= md) { p.push(i / fps); lp = i; }
+      }
+    }
+    return p;
+  }
+
+  calcRMSSD(peaks) {
+    if (peaks.length < 3) return 0;
+    const iv = [];
+    for (let i = 1; i < peaks.length; i++) iv.push(peaks[i] - peaks[i-1]);
+    let ss = 0;
+    for (let i = 1; i < iv.length; i++) { const d = iv[i] - iv[i-1]; ss += d * d; }
+    return Math.round(Math.sqrt(ss / (iv.length - 1)) * 1000);
+  }
+
+  envelope(sig, len) {
+    const o = new Float64Array(sig.length);
+    const w = Math.floor(this.fps * 2);
+    for (let i = 0; i < len; i++) {
+      let s = 0, c = 0;
+      for (let j = Math.max(0, i - w); j <= Math.min(len - 1, i + w); j++) { s += Math.abs(sig[j]); c++; }
+      o[i] = s / c;
+    }
+    return o;
+  }
+
+  calcRiseTime(sig, len, fps) {
+    let rt = 0, c = 0;
+    for (let i = 1; i < len; i++) if (sig[i] > sig[i-1]) { rt += (sig[i] - sig[i-1]); c++; }
+    return c > 0 ? rt / c : 0;
+  }
+
+  spectralEntropy(mag, lo, hi) {
+    let e = 0, t = 0;
+    for (let i = lo; i <= hi; i++) t += mag[i];
+    if (t === 0) return 0;
+    for (let i = lo; i <= hi; i++) {
+      const p = mag[i] / t;
+      if (p > 0) e -= p * Math.log2(p);
+    }
+    return e;
+  }
+
+  variance(sig, len) {
+    let m = 0;
+    for (let i = 0; i < len; i++) m += sig[i];
+    m /= len;
+    let v = 0;
+    for (let i = 0; i < len; i++) v += (sig[i] - m) * (sig[i] - m);
+    return v / len;
+  }
 }
 
 // ========================================================================
@@ -410,7 +577,6 @@ const passportPreview = document.getElementById("passportPreview");
 const oCtx = overlay.getContext("2d");
 const sCtx = sigCan.getContext("2d");
 
-// CRITICAL FIX: Hidden canvas for pixel sampling (square 320x320, cover-mapped)
 const hiddenCanvas = document.createElement("canvas");
 hiddenCanvas.width = 320; hiddenCanvas.height = 320;
 const hCtx = hiddenCanvas.getContext("2d", { willReadFrequently: true });
@@ -422,12 +588,8 @@ const dicom = new DicomHandler("dicomCanvas");
 const bpEst = new BpEstimator();
 
 // ========================================================================
-// 7b. COVER TRANSFORM HELPERS — FIX PASSPORT / HALF-HEIGHT SHRINK
+// 7b. COVER TRANSFORM HELPERS
 // ========================================================================
-/**
- * Computes object-fit:cover mapping from source (video) to destination (320x320 canvas).
- * Returns scale, offsetX, offsetY to map video coords -> canvas coords.
- */
 function getCoverTransform(srcW, srcH, dstW, dstH) {
   const scale = Math.max(dstW / srcW, dstH / srcH);
   const drawW = srcW * scale;
@@ -436,28 +598,15 @@ function getCoverTransform(srcW, srcH, dstW, dstH) {
   const offsetY = (dstH - drawH) / 2;
   return { scale, offsetX, offsetY, drawW, drawH };
 }
-
-/**
- * Draw video to canvas using object-fit:cover logic (no stretch, no half-height shrink).
- */
 function drawVideoCover(ctx, videoEl, dstW, dstH) {
   const srcW = videoEl.videoWidth || videoEl.width || 640;
   const srcH = videoEl.videoHeight || videoEl.height || 480;
   const t = getCoverTransform(srcW, srcH, dstW, dstH);
   ctx.drawImage(videoEl, t.offsetX, t.offsetY, t.drawW, t.drawH);
 }
-
-/**
- * Map a rectangle from video native coordinates to 320x320 cover-mapped canvas coordinates.
- */
 function mapRectToCover(box, srcW, srcH, dstW, dstH) {
   const t = getCoverTransform(srcW, srcH, dstW, dstH);
-  return {
-    x: box.x * t.scale + t.offsetX,
-    y: box.y * t.scale + t.offsetY,
-    w: box.width * t.scale,
-    h: box.height * t.scale
-  };
+  return { x: box.x * t.scale + t.offsetX, y: box.y * t.scale + t.offsetY, w: box.width * t.scale, h: box.height * t.scale };
 }
 
 // ========================================================================
@@ -483,13 +632,8 @@ loadFace();
 // 9. CAMERA — START / STOP / RESET
 // ========================================================================
 document.getElementById("btnCam").addEventListener("click", async () => {
-  // STOP CAMERA
   if (stream) {
-    if (isRec) {
-      isRec = false;
-      if (rppg) rppg.stop();
-      rppg = null;
-    }
+    if (isRec) { isRec = false; if (rppg) rppg.stop(); rppg = null; }
     stream.getTracks().forEach(t => t.stop());
     stream = null;
     video.style.display = "none";
@@ -505,7 +649,6 @@ document.getElementById("btnCam").addEventListener("click", async () => {
     scanSt.textContent = "Status: Camera stopped.";
     return;
   }
-  // START CAMERA
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, audio: false });
     video.srcObject = stream;
@@ -513,12 +656,10 @@ document.getElementById("btnCam").addEventListener("click", async () => {
     imgP.style.display = "none";
     place.style.display = "none";
     overlay.style.display = "block";
-    // CRITICAL FIX: Wait for video metadata so videoWidth/videoHeight are valid
     await new Promise((resolve) => {
       if (video.videoWidth > 0) resolve();
       else { video.onloadedmetadata = () => resolve(); }
     });
-    // CRITICAL FIX: Explicitly set video element dimensions to match container
     video.width = 320; video.height = 320;
     overlay.width = 320; overlay.height = 320;
     sigCan.width = 320; sigCan.height = 60;
@@ -537,28 +678,21 @@ async function faceLoop() {
   if (!stream) return;
   const srcW = video.videoWidth || 640;
   const srcH = video.videoHeight || 480;
-
-  // CRITICAL FIX: Draw video to hidden canvas using cover logic (matches visible CSS object-fit:cover)
   hCtx.clearRect(0, 0, 320, 320);
   drawVideoCover(hCtx, video, 320, 320);
-
-  // Clear overlay (UI only)
   oCtx.clearRect(0, 0, 320, 320);
   let roi = null;
   let faceBox = null;
 
-  // Try face detection
   if (faceLoaded) {
     try {
       const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks();
       if (dets.length > 0) {
         const box = dets[0].detection.box;
-        // Map detection coords from video native to 320x320 cover-mapped canvas
         const mapped = mapRectToCover(box, srcW, srcH, 320, 320);
         faceBox = mapped;
         oCtx.strokeStyle = "#22c55e"; oCtx.lineWidth = 2;
         oCtx.strokeRect(mapped.x, mapped.y, mapped.w, mapped.h);
-        // Passport-size forehead ROI: center-top 60% width, 30% height of face
         roi = { x: mapped.x + mapped.w * 0.2, y: mapped.y + mapped.h * 0.05, w: mapped.w * 0.6, h: mapped.h * 0.3 };
         oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
         oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
@@ -573,7 +707,6 @@ async function faceLoop() {
     }
   }
 
-  // Fixed ROI fallback
   if (!roi) {
     roi = { x: 80, y: 40, w: 160, h: 80 };
     oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
@@ -582,14 +715,12 @@ async function faceLoop() {
     oCtx.fillText("Fixed rPPG ROI", roi.x, roi.y - 4);
   }
 
-  // CRITICAL FIX: Sample from hidden canvas (cover-mapped, actual video pixels), NOT overlay
   if (isRec && rppg) {
     const c = rppg.addFrame(roi, hCtx);
     if (!c) finishRec();
     else drawSig();
   }
 
-  // Passport preview: capture face box area from hidden canvas
   if (faceBox && passportPreview.style.display !== "block") {
     try {
       const pW = 120, pH = 160;
@@ -599,7 +730,7 @@ async function faceLoop() {
       pCtx.drawImage(hiddenCanvas, faceBox.x, faceBox.y, faceBox.w, faceBox.h, 0, 0, pW, pH);
       passportPreview.src = pCan.toDataURL("image/jpeg", 0.9);
       passportPreview.style.display = "block";
-    } catch (e) { /* ignore passport errors */ }
+    } catch (e) {}
   }
 
   animId = requestAnimationFrame(faceLoop);
@@ -761,8 +892,15 @@ document.getElementById("reportInput").addEventListener("change", async (e) => {
 });
 
 // ========================================================================
-// 17. EVALUATION ENGINE — ZERO HARDCODING
+// 17. EVALUATION ENGINE
 // ========================================================================
+// CORRECTED: Chakra proxy uses deviation from optimal, not ratio
+function chakraPct(value, optimal, range) {
+  const maxDev = Math.max(optimal - range[0], range[1] - optimal);
+  const dev = Math.abs(value - optimal);
+  return Math.max(0, Math.min(100, Math.round(100 - (dev / maxDev) * 100)));
+}
+
 document.getElementById("btnEval").addEventListener("click", async () => {
   const rows = [];
   const hasRppg = rppg && rppg.res && !rppg.res.error;
@@ -780,11 +918,10 @@ document.getElementById("btnEval").addEventListener("click", async () => {
   if (hasRppg) {
     const r = rppg.res;
     rows.push({ param: "Heart Rate (BPM)", source: "Webcam rPPG — Forehead green-channel CHROM projection + FFT spectral peak", rawVal: r.bpm + " BPM", rawNum: r.bpm, thresh: VEDIC.hr.val + " BPM (" + VEDIC.hr.label + ")", threshNum: VEDIC.hr.val, status: inRange(r.bpm, VEDIC.hr.range) });
-    rows.push({ param: "Heart Rate Variability (HRV)", source: "Webcam rPPG — Time-domain peak-to-peak interval analysis (RMSSD)", rawVal: r.rmssd + " ms RMSSD", rawNum: r.rmssd, thresh: VEDIC.hrv.val + " ms (" + VEDIC.hrv.label + ")", threshNum: VEDIC.hrv.val, status: inRange(r.rmssd, VEDIC.hrv.range) });
+    rows.push({ param: "Heart Rate Variability (HRV)", source: "Webcam rPPG — Time-domain peak-to-peak interval analysis", rawVal: r.rmssd + " ms RMSSD", rawNum: r.rmssd, thresh: VEDIC.hrv.val + " ms (" + VEDIC.hrv.label + ")", threshNum: VEDIC.hrv.val, status: inRange(r.rmssd, VEDIC.hrv.range) });
     rows.push({ param: "Respiratory Rate", source: "Webcam rPPG — Envelope modulation of rPPG signal (0.1–0.5 Hz band)", rawVal: r.rr + " /min", rawNum: r.rr, thresh: VEDIC.rr.val + " /min (" + VEDIC.rr.label + ")", threshNum: VEDIC.rr.val, status: inRange(r.rr, VEDIC.rr.range) });
     rows.push({ param: "Optical Signal Quality", source: "Webcam rPPG — Spectral purity ratio (bandpass power / total power)", rawVal: r.sq + "%", rawNum: r.sq, thresh: VEDIC.sq.val + "% (" + VEDIC.sq.label + ")", threshNum: VEDIC.sq.val, status: inRange(r.sq, VEDIC.sq.range) });
-    // ML Features row
-    rows.push({ param: "ML BP Features", source: "TensorFlow.js input — Pulse amplitude, rise time, spectral entropy", rawVal: "PA:" + r.features.pulseAmp.toFixed(2) + " RT:" + r.features.riseTime.toFixed(3) + " SE:" + r.features.specEnt.toFixed(2), rawNum: r.sq, thresh: "7 features → 2-output dense net", threshNum: 100, status: bpEst.calibrations.length >= 2 ? "Model calibrated" : "Calibrate with known BP" });
+    rows.push({ param: "ML BP Features", source: "Pulse amplitude, rise time, spectral entropy → fed to TensorFlow.js BP model", rawVal: "PA:" + r.features.pulseAmp.toFixed(2) + " RT:" + r.features.riseTime.toFixed(3) + " SE:" + r.features.specEnt.toFixed(2), rawNum: r.sq, thresh: "7 features → 2-output dense net", threshNum: 100, status: bpEst.calibrations.length >= 2 ? "Model calibrated" : "Calibrate with known BP" });
   } else {
     rows.push({ param: "Heart Rate / HRV / RR / Quality", source: "Webcam rPPG — Not Recorded", rawVal: "No video stream", rawNum: 0, thresh: "Requires 10s forehead video", threshNum: 100, status: "Use camera + Record button" });
   }
@@ -833,20 +970,21 @@ document.getElementById("btnEval").addEventListener("click", async () => {
     rows.push({ param: "SPECT / CT / MRI Imaging", source: "Nuclear Medicine / Radiology Facility Required", rawVal: "No DICOM uploaded", rawNum: 0, thresh: "Gamma camera + radiotracer / X-ray scanner", threshNum: 100, status: "Upload DICOM from hospital or imaging center" });
   }
 
-  // --- CHAKRA PROXIES ---
+  // --- CHAKRA PROXIES — CORRECTED DEVIATION-BASED PERCENTAGES ---
   if (hasRppg) {
     const r = rppg.res;
-    const hrPct = Math.min(100, Math.round((r.bpm / 72) * 100));
-    const hrvPct = Math.min(100, Math.round((r.rmssd / 50) * 100));
-    const rrPct = Math.min(100, Math.round((r.rr / 16) * 100));
-    const sqPct = r.sq;
-    rows.push({ param: "1. Muladhara (Root)", source: "Proxy: HRV Grounding Stability", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Prthvi Tattva)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
-    rows.push({ param: "2. Svadhisthana (Sacral)", source: "Proxy: HRV Fluid Resilience", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Jala Tattva)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
-    rows.push({ param: "3. Manipura (Solar Plexus)", source: "Proxy: Respiratory Agni Rate", rawVal: rrPct + "% (RR proxy)", rawNum: rrPct, thresh: "100% (Agni Tattva)", threshNum: 100, status: inRange(r.rr, [12, 20]) });
-    rows.push({ param: "4. Anahata (Heart)", source: "Proxy: Real HR Coherence", rawVal: hrPct + "% (HR proxy)", rawNum: hrPct, thresh: "100% (Vayu Tattva)", threshNum: 100, status: inRange(r.bpm, [60, 100]) });
-    rows.push({ param: "5. Vishuddhi (Throat)", source: "Proxy: Signal Clarity Index", rawVal: sqPct + "% (Quality proxy)", rawNum: sqPct, thresh: "100% (Akasha Tattva)", threshNum: 100, status: inRange(r.sq, [70, 100]) });
-    rows.push({ param: "6. Ajna (Third Eye)", source: "Proxy: Forehead rPPG Signal", rawVal: sqPct + "% (Forehead proxy)", rawNum: sqPct, thresh: "100% (Manas Rahasya)", threshNum: 100, status: inRange(r.sq, [70, 100]) });
-    rows.push({ param: "7. Sahasrara (Crown)", source: "Proxy: Integrated Neural Resilience", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Sattvic Unity)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
+    const hrPct = chakraPct(r.bpm, VEDIC.hr.val, VEDIC.hr.range);
+    const hrvPct = chakraPct(r.rmssd, VEDIC.hrv.val, VEDIC.hrv.range);
+    const rrPct = chakraPct(r.rr, VEDIC.rr.val, VEDIC.rr.range);
+    const sqPct = chakraPct(r.sq, VEDIC.sq.val, VEDIC.sq.range);
+
+    rows.push({ param: "1. Muladhara (Root)", source: "Proxy: HRV grounding proxy", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Prthvi Tattva)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
+    rows.push({ param: "2. Svadhisthana (Sacral)", source: "Proxy: HRV grounding proxy", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Jala Tattva)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
+    rows.push({ param: "3. Manipura (Solar Plexus)", source: "Proxy: Respiratory rate proxy", rawVal: rrPct + "% (RR proxy)", rawNum: rrPct, thresh: "100% (Agni Tattva)", threshNum: 100, status: inRange(r.rr, [12, 20]) });
+    rows.push({ param: "4. Anahata (Heart)", source: "Proxy: Real HR coherence", rawVal: hrPct + "% (HR proxy)", rawNum: hrPct, thresh: "100% (Vayu Tattva)", threshNum: 100, status: inRange(r.bpm, [60, 100]) });
+    rows.push({ param: "5. Vishuddhi (Throat)", source: "Proxy: Signal quality proxy", rawVal: sqPct + "% (Quality proxy)", rawNum: sqPct, thresh: "100% (Akasha Tattva)", threshNum: 100, status: inRange(r.sq, [70, 100]) });
+    rows.push({ param: "6. Ajna (Third Eye)", source: "Proxy: Signal quality proxy", rawVal: sqPct + "% (Forehead proxy)", rawNum: sqPct, thresh: "100% (Manas Rahasya)", threshNum: 100, status: inRange(r.sq, [70, 100]) });
+    rows.push({ param: "7. Sahasrara (Crown)", source: "Proxy: HRV grounding proxy", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Sattvic Unity)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
   } else {
     const names = ["Muladhara","Svadhisthana","Manipura","Anahata","Vishuddhi","Ajna","Sahasrara"];
     names.forEach((name, i) => { rows.push({ param: (i+1) + ". " + name, source: "Proxy: rPPG not recorded", rawVal: "No data", rawNum: 0, thresh: "100%", threshNum: 100, status: "Record 10s rPPG first" }); });
