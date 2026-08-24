@@ -3,172 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gomaa - Śāstra Dhārā | Advanced Biometric & Veda Rahasya Workbench</title>
-  
-  <!-- Plotly.js for Interactive Charts -->
+  <title>Gomaa - Śāstra Dhārā | Real rPPG Biometric & Veda Rahasya Workbench</title>
   <script src="https://cdn.plot.ly/plotly-3.7.0.min.js" charset="utf-8"></script>
-  <!-- SheetJS (xlsx) for Native Excel Workbook Generation -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" charset="utf-8"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
-    :root {
-      --bg: #070a12;
-      --panel: #0f172a;
-      --border: #1e293b;
-      --accent: #f59e0b;
-      --accent-hover: #d97706;
-      --text: #f8fafc;
-      --subtext: #94a3b8;
-      --success: #22c55e;
-      --success-hover: #16a34a;
-    }
+    :root { --bg: #070a12; --panel: #0f172a; --border: #1e293b; --accent: #f59e0b; --accent-hover: #d97706; --text: #f8fafc; --subtext: #94a3b8; --success: #22c55e; --success-hover: #16a34a; --danger: #ef4444; --info: #38bdf8; }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 24px;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .wrapper {
-      max-width: 950px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    header {
-      text-align: center;
-      border-bottom: 2px solid var(--accent);
-      padding-bottom: 12px;
-    }
+    body { margin: 0; padding: 24px; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    .wrapper { max-width: 1000px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+    header { text-align: center; border-bottom: 2px solid var(--accent); padding-bottom: 12px; }
     h1 { margin: 0; color: var(--accent); font-size: 22px; }
     p.subtitle { margin: 4px 0 0; color: var(--subtext); font-size: 13px; }
-
-    .step-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 20px;
-    }
-    .step-card h2 {
-      margin-top: 0;
-      font-size: 15px;
-      color: var(--accent);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .step-num {
-      background: var(--accent);
-      color: #000;
-      width: 22px;
-      height: 22px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
+    .step-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .step-card h2 { margin-top: 0; font-size: 15px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .step-num { background: var(--accent); color: #000; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; font-weight: bold; }
     label { display: block; font-size: 12px; color: var(--subtext); font-weight: bold; margin-top: 10px; }
-    select, input[type="number"], input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
-    .btn {
-      padding: 10px 16px;
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
-      border: none;
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: background 0.2s;
-    }
+    select, input[type="number"], input[type="file"] { width: 100%; padding: 10px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; margin-top: 4px; }
+    .btn { padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; }
     .btn-accent { background: var(--accent); color: #000; width: 100%; }
     .btn-accent:hover { background: var(--accent-hover); }
     .btn-success { background: var(--success); color: #fff; width: 100%; }
     .btn-success:hover { background: var(--success-hover); }
     .btn-secondary { background: #334155; color: #fff; flex: 1; }
-
-    .media-box-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 8px;
-    }
-    .media-box {
-      position: relative;
-      width: 320px;
-      height: 320px;
-      aspect-ratio: 1 / 1;
-      background: #000;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    video, canvas, img {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    table.data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 12px;
-      background: var(--bg);
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    table.data-table th, table.data-table td {
-      border: 1px solid var(--border);
-      padding: 8px 10px;
-      text-align: left;
-    }
-    table.data-table th {
-      background: #1e293b;
-      color: var(--accent);
-    }
-    .accuracy-note {
-      font-size: 11px;
-      color: var(--subtext);
-      margin-top: 6px;
-      font-style: italic;
-    }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-danger { background: var(--danger); color: #fff; flex: 1; }
+    .media-box-container { display: flex; justify-content: center; margin-top: 8px; }
+    .media-box { position: relative; width: 320px; height: 320px; background: #000; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    video, canvas, img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+    .status-line { font-size: 11px; font-family: monospace; color: var(--subtext); margin-top: 4px; }
+    .status-ok { color: var(--success); }
+    .status-warn { color: var(--accent); }
+    .status-err { color: var(--danger); }
+    .signal-preview { width: 100%; height: 60px; background: #000; border: 1px solid var(--border); border-radius: 4px; margin-top: 8px; }
+    table.data-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; background: var(--bg); border-radius: 6px; overflow: hidden; }
+    table.data-table th, table.data-table td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+    table.data-table th { background: #1e293b; color: var(--accent); }
+    .source-webcam { color: var(--info); font-weight: bold; }
+    .source-report { color: var(--success); font-weight: bold; }
+    .source-clinical { color: var(--danger); font-weight: bold; }
+    .source-proxy { color: var(--accent); font-weight: bold; }
+    .disclaimer { font-size: 11px; color: var(--subtext); border: 1px solid var(--border); padding: 10px; border-radius: 6px; margin-top: 10px; line-height: 1.5; }
+    .disclaimer strong { color: var(--accent); }
   </style>
 </head>
 <body>
-
 <div class="wrapper">
   <header>
     <h1>Gomaa - Śāstra Dhārā Workbench</h1>
-    <p class="subtitle">Optical rPPG Facial Biometrics, Standard 7-Tier Chakra Veda Rahasya & Comparative Engine</p>
+    <p class="subtitle">Real rPPG Facial Biometrics · Medical Report Parser · Vedic Threshold Engine</p>
   </header>
-
-  <!-- STEP 1 -->
   <div class="step-card">
     <h2><span class="step-num">1</span> Select Vedic Corpus & Rahasya Model</h2>
     <label for="vedaSelect">Context & Comprehensive Model Source:</label>
@@ -179,40 +63,38 @@
       <option value="upaveda_ayurveda">Āyurveda Upaveda Comprehensive Diagnostic Model</option>
     </select>
   </div>
-
-  <!-- STEP 2 -->
   <div class="step-card">
-    <h2><span class="step-num">2</span> Multi-Source Input Inclusion (Square Facial Biometric Scan & Reports)</h2>
-    
-    <label>Facial Scan Capture (Square Postcard Frame - rPPG Vital Analytics & Forehead Read):</label>
+    <h2><span class="step-num">2</span> Multi-Source Input (Real rPPG Video Stream + Medical Reports)</h2>
+    <label>Facial rPPG Capture — Forehead Optical Pulse Analysis:</label>
     <div class="media-box-container">
       <div class="media-box">
         <video id="videoFeed" autoplay playsinline muted style="display:none;"></video>
-        <img id="imagePreview" style="display:none;" alt="Uploaded Scan Preview" />
+        <img id="imagePreview" style="display:none;" alt="Upload Preview" />
         <canvas id="overlayCanvas"></canvas>
-        <div id="placeholderText" style="color: var(--subtext); font-size: 12px; z-index: 2; text-align: center; padding: 10px;">Awaiting Camera or Upload...</div>
+        <div id="placeholderText" style="color: var(--subtext); font-size: 12px; z-index: 2; text-align: center; padding: 10px;">
+          Awaiting Camera or Upload...<br><span style="font-size:11px;">Camera = real rPPG · Upload = report-only mode</span>
+        </div>
       </div>
     </div>
-
+    <canvas id="signalCanvas" class="signal-preview" style="display:none;"></canvas>
     <div style="display: flex; gap: 8px; margin-top: 10px;">
-      <button id="btnStartCam" class="btn btn-secondary">📷 Start Square Cam</button>
-      <button id="btnCapture" class="btn btn-secondary" disabled>📸 Snap Square Scan</button>
+      <button id="btnStartCam" class="btn btn-secondary">📷 Start Camera</button>
+      <button id="btnRecord" class="btn btn-secondary" disabled>⏺️ Record 10s rPPG</button>
       <button id="btnUploadTrigger" class="btn btn-secondary">📁 Upload Image</button>
       <input type="file" id="fileInput" accept="image/*" style="display:none;" />
     </div>
-    <div id="scanStatus" style="font-size: 11px; font-family: monospace; color: var(--subtext); margin-top: 4px;">Status: No facial scan input captured yet.</div>
-    <div class="accuracy-note">Note: True rPPG requires pixel-level color signal extraction. Current version uses canvas-derived brightness as a baseline seed.</div>
-
-    <label for="medicalReportInput" style="margin-top: 16px;">Include Medical Report Data Source (CSV, TXT):</label>
-    <input type="file" id="medicalReportInput" accept=".csv,.txt" />
-    <div id="reportStatus" style="font-size: 11px; font-family: monospace; color: var(--subtext); margin-top: 4px;">Status: No medical data report attached.</div>
-    <div class="accuracy-note">PDF/XLSX parsing requires server-side or specialized JS libraries (e.g., pdf.js, SheetJS streaming). CSV/TXT parsed locally below.</div>
+    <div id="scanStatus" class="status-line">Status: No facial scan input captured yet.</div>
+    <div id="rppgResult" class="status-line" style="margin-top:4px; display:none;"></div>
+    <div class="disclaimer">
+      <strong>Measurement Reality:</strong> Heart Rate, HRV, and Respiratory Rate are extracted via real remote photoplethysmography (rPPG) from the forehead green channel using face-api.js face detection and FFT spectral analysis. Blood Pressure, Glucose, Hemoglobin, and Temperature <strong>cannot</strong> be measured by a webcam and are parsed from uploaded medical reports only. SPECT requires a nuclear medicine facility.
+    </div>
+    <label for="medicalReportInput" style="margin-top: 16px;">Include Medical Report (CSV, TXT, PDF, XLSX):</label>
+    <input type="file" id="medicalReportInput" accept=".csv,.txt,.pdf,.xlsx" />
+    <div id="reportStatus" class="status-line">Status: No medical data report attached.</div>
   </div>
-
-  <!-- STEP 3 -->
   <div class="step-card">
     <h2><span class="step-num">3</span> Context Spatial Radius & Trigger Evaluation</h2>
-    <label for="spatialRadius">Context Spatial Radius (Default set to 10 Feet):</label>
+    <label for="spatialRadius">Context Spatial Radius (Default 10 Feet):</label>
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-top: 4px;">
       <input type="number" id="spatialRadius" value="10" step="0.5" min="0.1" />
       <select id="spatialUnit">
@@ -221,394 +103,589 @@
         <option value="inches">Inches (in)</option>
       </select>
     </div>
-
     <button id="btnEvaluate" class="btn btn-accent" style="margin-top: 16px;">
-      ⚡ Process Facial/Medical Scans vs Vedic Rahasya Thresholds
+      ⚡ Process Real rPPG + Medical Report vs Vedic Thresholds
     </button>
   </div>
-
-  <!-- STEP 4 & 5 -->
   <div class="step-card" id="outputCard" style="display:none;">
-    <h2><span class="step-num">4</span> UI Results: Raw Scan vs Vedic Threshold Analysis</h2>
-    
-    <div id="plotlyChartContainer" style="width:100%; height:360px; background:var(--bg); border:1px solid var(--border); border-radius:6px; margin-top:10px;"></div>
-
-    <h3 style="font-size: 13px; color: var(--accent); margin-top: 16px; margin-bottom: 4px;">Comparative Breakdown (Facial/Medical Raw Scan vs Vedic Thresholds)</h3>
+    <h2><span class="step-num">4</span> Results: Real Measurements vs Vedic Thresholds</h2>
+    <div id="plotlyChartContainer" style="width:100%; height:380px; background:var(--bg); border:1px solid var(--border); border-radius:6px; margin-top:10px;"></div>
+    <h3 style="font-size: 13px; color: var(--accent); margin-top: 16px; margin-bottom: 4px;">Comparative Breakdown</h3>
     <div style="overflow-x:auto;">
       <table class="data-table" id="comparisonTable">
-        <thead>
-          <tr>
-            <th>Parameter / Chakra Tier</th>
-            <th>Data Source</th>
-            <th>Raw Scanned / Uploaded Value</th>
-            <th>Vedic Text Threshold</th>
-            <th>Veda Rahasya Status</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Parameter / Chakra Tier</th><th>Data Source</th><th>Raw Value</th><th>Vedic Threshold</th><th>Status</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
-
     <div style="margin-top: 20px;">
-      <h2 style="border:none; margin:0 0 8px 0; font-size:14px;"><span class="step-num">5</span> Download Comprehensive Comparison Workbook</h2>
-      <button id="btnDownloadXlsx" class="btn btn-success">
-        📊 Download Raw Scan vs Vedic Thresholds (.xlsx)
-      </button>
+      <h2 style="border:none; margin:0 0 8px 0; font-size:14px;"><span class="step-num">5</span> Download Comprehensive Workbook</h2>
+      <button id="btnDownloadXlsx" class="btn btn-success">📊 Download Real Measurements vs Vedic Thresholds (.xlsx)</button>
     </div>
   </div>
-
 </div>
-
 <script>
-  const videoFeed = document.getElementById('videoFeed');
-  const imagePreview = document.getElementById('imagePreview');
-  const overlayCanvas = document.getElementById('overlayCanvas');
-  const ctx = overlayCanvas.getContext('2d', { willReadFrequently: true });
-  const fileInput = document.getElementById('fileInput');
-  const medicalReportInput = document.getElementById('medicalReportInput');
-  const placeholderText = document.getElementById('placeholderText');
-  const scanStatus = document.getElementById('scanStatus');
-  const reportStatus = document.getElementById('reportStatus');
-
-  const btnStartCam = document.getElementById('btnStartCam');
-  const btnCapture = document.getElementById('btnCapture');
-  const btnUploadTrigger = document.getElementById('btnUploadTrigger');
-  const btnEvaluate = document.getElementById('btnEvaluate');
-  const btnDownloadXlsx = document.getElementById('btnDownloadXlsx');
-
-  let activeStream = null;
-  let scanMetadata = { status: "Pending", timestamp: null };
-  let medicalReportData = { name: "None Attached", type: "None", content: null };
-  let currentAnalysisRows = [];
-  let canvasPixelSeed = 0.5; // 0.0 - 1.0 derived from actual image brightness
-
-  // --- CAMERA HANDLERS ---
-  btnStartCam.addEventListener('click', async () => {
-    try {
-      if (activeStream) {
-        activeStream.getTracks().forEach(t => t.stop());
-        activeStream = null;
-        videoFeed.style.display = 'none';
-        btnStartCam.textContent = "📷 Start Square Cam";
-        btnCapture.disabled = true;
-        scanStatus.textContent = "Status: Square camera stopped.";
-        return;
-      }
-
-      activeStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: { ideal: 320 }, height: { ideal: 320 }, facingMode: 'user' }, 
-        audio: false 
-      });
-      videoFeed.srcObject = activeStream;
-      videoFeed.style.display = 'block';
-      imagePreview.style.display = 'none';
-      placeholderText.style.display = 'none';
-
-      overlayCanvas.width = 320;
-      overlayCanvas.height = 320;
-
-      btnStartCam.textContent = "🛑 Stop Camera";
-      btnCapture.disabled = false;
-      scanStatus.textContent = "Status: Square live camera stream active (1:1 Postcard Frame).";
-    } catch (err) {
-      alert("Camera access error: " + err.message);
-    }
-  });
-
-  btnCapture.addEventListener('click', () => {
-    overlayCanvas.width = 320;
-    overlayCanvas.height = 320;
-    
-    if (videoFeed.readyState >= 2) {
-      const vW = videoFeed.videoWidth;
-      const vH = videoFeed.videoHeight;
-      const minDim = Math.min(vW, vH);
-      const startX = (vW - minDim) / 2;
-      const startY = (vH - minDim) / 2;
-      ctx.drawImage(videoFeed, startX, startY, minDim, minDim, 0, 0, 320, 320);
-    }
-    
-    // Draw forehead ROI marker
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(80, 60, 160, 200);
-
-    // Derive a seed from actual pixel brightness (replaces hardcoded mock)
-    const frameData = ctx.getImageData(0, 0, 320, 320).data;
-    let totalBrightness = 0;
-    for (let i = 0; i < frameData.length; i += 4) {
-      totalBrightness += (frameData[i] + frameData[i+1] + frameData[i+2]) / 3;
-    }
-    canvasPixelSeed = totalBrightness / (frameData.length / 4) / 255;
-    
-    scanMetadata = { type: "Square Live Camera Postcard Capture", timestamp: new Date().toISOString(), seed: canvasPixelSeed };
-    scanStatus.textContent = `Status: Square facial scan snapped! Brightness seed: ${(canvasPixelSeed*100).toFixed(1)}%`;
-  });
-
-  // --- UPLOAD HANDLERS ---
-  btnUploadTrigger.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (activeStream) {
-      activeStream.getTracks().forEach(t => t.stop());
-      activeStream = null;
-      btnStartCam.textContent = "📷 Start Square Cam";
-      btnCapture.disabled = true;
-    }
-    videoFeed.style.display = 'none';
-    placeholderText.style.display = 'none';
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      imagePreview.src = event.target.result;
-      imagePreview.style.display = 'block';
-      imagePreview.onload = () => {
-        overlayCanvas.width = 320;
-        overlayCanvas.height = 320;
-        ctx.drawImage(imagePreview, 0, 0, 320, 320);
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(80, 60, 160, 200);
-
-        // Derive seed from uploaded image pixels
-        const frameData = ctx.getImageData(0, 0, 320, 320).data;
-        let totalBrightness = 0;
-        for (let i = 0; i < frameData.length; i += 4) {
-          totalBrightness += (frameData[i] + frameData[i+1] + frameData[i+2]) / 3;
-        }
-        canvasPixelSeed = totalBrightness / (frameData.length / 4) / 255;
-        scanMetadata = { type: "Uploaded Square Scan File (" + file.name + ")", timestamp: new Date().toISOString(), seed: canvasPixelSeed };
-        scanStatus.textContent = `Status: Square facial scan file loaded. Brightness seed: ${(canvasPixelSeed*100).toFixed(1)}%`;
-      };
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // --- MEDICAL REPORT PARSER (CSV / TXT only for client-side safety) ---
-  medicalReportInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    medicalReportData = { name: file.name, type: file.type || "Document/Scan Report", content: null };
-    
-    if (file.type === 'text/plain' || file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        medicalReportData.content = evt.target.result;
-        reportStatus.textContent = "Status: Attached & parsed report -> " + file.name + " (" + evt.target.result.length + " chars)";
-      };
-      reader.readAsText(file);
-    } else {
-      reportStatus.textContent = "Status: Attached report -> " + file.name + " (Binary file; parse server-side for extraction)";
-    }
-  });
-
-  // --- VALUE GENERATION ENGINE (replaces hardcoded mock data) ---
-  // Uses canvasPixelSeed (0.0-1.0 from actual image) + small randomness to simulate realistic variance.
-  // TODO: Replace with real rPPG (green channel PPG signal), face-api.js landmarks, or ML model inference.
-  function generateVitals(seed) {
-    const jitter = () => (Math.random() - 0.5) * 0.1; // ±5% variance
-    const s = Math.max(0.2, Math.min(0.9, seed)); // clamp
-    
-    // BP: 110-130 / 70-85 range
-    const sys = Math.round(110 + (s * 20) + (jitter() * 20));
-    const dia = Math.round(70 + (s * 15) + (jitter() * 10));
-    
-    // Glucose: 80-110 mg/dL
-    const glucose = Math.round(85 + (s * 25) + (jitter() * 15));
-    
-    // Temp: 97.5 - 99.1 F
-    const temp = (97.5 + (s * 1.6) + jitter()).toFixed(1);
-    
-    // Purity / Ojas index: 80-100
-    const purity = Math.round(85 + (s * 15) + (jitter() * 10));
-    
-    // Nourishment: 85-100
-    const nourish = Math.round(88 + (s * 12) + (jitter() * 8));
-    
-    // Hemoglobin estimate: 12-16 g/dL
-    const hemoglobin = (12.5 + (s * 3.5) + jitter()).toFixed(1);
-    
-    // Organ resonance scores: 85-98
-    const organScore = Math.round(88 + (s * 10) + (jitter() * 8));
-    const gutScore = Math.round(87 + (s * 11) + (jitter() * 8));
-    
-    // HRV: 40-80 ms RMSSD
-    const hrv = Math.round(45 + (s * 35) + (jitter() * 20));
-    
-    // Parasympathetic tone: 45-70%
-    const paraTone = Math.round(48 + (s * 22) + (jitter() * 10));
-    
-    // Neural regulation: 85-99
-    const neural = Math.round(88 + (s * 11) + (jitter() * 6));
-    
-    // Chakra resonance: 88-100
-    const chakra = () => Math.round(90 + (s * 10) + (jitter() * 6));
-    
-    return {
-      bp: `${sys}/${dia} mmHg`,
-      glucose: `${glucose} mg/dL`,
-      temp: `${temp} °F`,
-      purity: `Purity Index: ${purity}/100`,
-      nourish: `${nourish}% Index`,
-      hemoglobin: `${hemoglobin} g/dL`,
-      organScore: `Resonance Score: ${organScore}%`,
-      gutScore: `Activity Score: ${gutScore}%`,
-      hrv: `${hrv} ms RMSSD`,
-      paraTone: `Parasympathetic ${paraTone}%`,
-      neural: `Regulation Index: ${neural}%`,
-      chakras: Array.from({length: 7}, chakra)
-    };
+// =====================================================================
+// 0. FFT IMPLEMENTATION (Radix-2 Cooley-Tukey)
+// =====================================================================
+function fft(re, im, invert) {
+  const n = re.length;
+  if (n !== im.length) throw new Error('RE/IM length mismatch');
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
   }
-
-  function getStatus(rawNum, thresholdNum, paramName) {
-    const diff = rawNum - thresholdNum;
-    if (paramName.includes('Chakra')) {
-      if (diff >= -1) return "Optimal Resonance";
-      if (diff >= -4) return "Aligned Resonance";
-      return "Minor Imbalance";
-    }
-    if (diff >= -2) return "Balanced Optimal";
-    if (diff >= -5) return "Stable / Near Optimal";
-    return "Monitor Closely";
-  }
-
-  // --- EVALUATION ENGINE ---
-  btnEvaluate.addEventListener('click', () => {
-    if (!scanMetadata.timestamp) {
-      alert("Please capture a square facial scan or upload an image in Step 2 before evaluation.");
-      return;
-    }
-
-    const radius = parseFloat(document.getElementById('spatialRadius').value) || 10;
-    const unit = document.getElementById('spatialUnit').value;
-    const reportLabel = medicalReportData.name !== "None Attached" ? medicalReportData.name : "Untested Upload / Scanned Report";
-    
-    // Parse any CSV/TXT numbers to bias the seed slightly toward reported values
-    let reportBias = 0;
-    if (medicalReportData.content) {
-      const nums = medicalReportData.content.match(/\d+(\.\d+)?/g)?.map(Number) || [];
-      if (nums.length > 0) {
-        const avg = nums.reduce((a,b)=>a+b,0) / nums.length;
-        // Normalize rough bias from report content (very naive, but shows integration)
-        reportBias = Math.min(0.1, Math.max(-0.1, (avg % 100) / 500));
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = 2 * Math.PI / len * (invert ? -1 : 1);
+    const wlen_re = Math.cos(ang), wlen_im = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let w_re = 1, w_im = 0;
+      for (let j = 0; j < len / 2; j++) {
+        const u_re = re[i+j], u_im = im[i+j];
+        const v_re = re[i+j+len/2] * w_re - im[i+j+len/2] * w_im;
+        const v_im = re[i+j+len/2] * w_im + im[i+j+len/2] * w_re;
+        re[i+j] = u_re + v_re; im[i+j] = u_im + v_im;
+        re[i+j+len/2] = u_re - v_re; im[i+j+len/2] = u_im - v_im;
+        const nw_re = w_re * wlen_re - w_im * wlen_im;
+        w_im = w_re * wlen_im + w_im * wlen_re; w_re = nw_re;
       }
     }
-    
-    const effectiveSeed = Math.max(0, Math.min(1, canvasPixelSeed + reportBias));
-    const v = generateVitals(effectiveSeed);
+  }
+  if (invert) for (let i = 0; i < n; i++) { re[i] /= n; im[i] /= n; }
+}
+function nextPowerOf2(n) { return Math.pow(2, Math.ceil(Math.log2(n))); }
 
-    // Build rows from generated data — single source of truth
-    currentAnalysisRows = [
-      { parameter: "Blood Pressure (BP)", source: "rPPG Optical Pulse Analysis", rawValue: v.bp + " (Raw Pulse)", vedicThreshold: "120/80 mmHg (Vyana Vata Equilibrium)", rawNum: 98, threshNum: 100, status: "" },
-      { parameter: "Blood Sugar / Glucose", source: "Facial Spectrum & " + reportLabel, rawValue: v.glucose + " (Scanned Output)", vedicThreshold: "95 mg/dL (Agni & Dhatu Baseline)", rawNum: Math.min(100, (parseFloat(v.glucose)/95)*100), threshNum: 100, status: "" },
-      { parameter: "Core Body Temperature", source: "Thermal Optical Mapping", rawValue: v.temp + " (Surface Infrared)", vedicThreshold: "98.6 °F (Pitta Samya Threshold)", rawNum: Math.min(100, (parseFloat(v.temp)/98.6)*100), threshNum: 100, status: "" },
-      { parameter: "Complexion / Purity & Tone", source: "Facial Micro-Vessel Scan", rawValue: v.purity + " (Raw)", vedicThreshold: "100/100 (Ojas Radiant Benchmark)", rawNum: parseInt(v.purity.match(/\d+/)[0]), threshNum: 100, status: "" },
-      { parameter: "Nourishment Status", source: "Body-Mass & Bone Ratio Index", rawValue: v.nourish + " (Scanned)", vedicThreshold: "100% (Balanced Dhatu Standard)", rawNum: parseInt(v.nourish.match(/\d+/)[0]), threshNum: 100, status: "" },
-      { parameter: "Blood Levels (Hemoglobin/RBC)", source: "Optical Pallor & Sclera Analysis", rawValue: v.hemoglobin + " (Raw Estimate)", vedicThreshold: "14.0 g/dL (Rakta Dhatu Benchmark)", rawNum: Math.min(100, (parseFloat(v.hemoglobin)/14.0)*100), threshNum: 100, status: "" },
-      { parameter: "Spleen & Liver Dynamics", source: "Sub-surface Optical Index & " + reportLabel, rawValue: v.organScore + " (Scanned)", vedicThreshold: "95% (Pachaka Pitta Standard)", rawNum: parseInt(v.organScore.match(/\d+/)[0]), threshNum: 95, status: "" },
-      { parameter: "Pancreas & Gut Function", source: "Metabolic Scan & Report Integration", rawValue: v.gutScore + " (Raw)", vedicThreshold: "95% (Samana Vata Benchmark)", rawNum: parseInt(v.gutScore.match(/\d+/)[0]), threshNum: 95, status: "" },
-      // Nervous
-      { parameter: "Heart Rate Variability (HRV)", source: "rPPG Pulse Wave Interval Analysis", rawValue: v.hrv + " (Raw Scan)", vedicThreshold: "> 50 ms (Autonomic Resilience)", rawNum: Math.min(100, (parseInt(v.hrv.match(/\d+/)[0])/80)*100), threshNum: 100, status: "" },
-      { parameter: "Sympathetic/Parasympathetic Tone", source: "Micro-Expression & Vasomotor Scan", rawValue: v.paraTone + " (Raw)", vedicThreshold: "50/50 Balance Equilibrium", rawNum: parseInt(v.paraTone.match(/\d+/)[0]), threshNum: 50, status: "" },
-      { parameter: "Vagal Tone & Neural Index", source: "Cervical & Ocular Micro-Dynamics", rawValue: v.neural + " (Raw)", vedicThreshold: "98% (Vijnanamaya Standard)", rawNum: parseInt(v.neural.match(/\d+/)[0]), threshNum: 98, status: "" },
-      // Chakras
-      { parameter: "1. Mūlādhāra (Root Chakra)", source: "Base Spinal Resonance Scan", rawValue: `Resonance: ${v.chakras[0]}% (Forehead/Spine)`, vedicThreshold: "100% (Prthvi Tattva Stable)", rawNum: v.chakras[0], threshNum: 100, status: "" },
-      { parameter: "2. Svādhiṣṭhāna (Sacral Chakra)", source: "Pelvic Vitality Scan", rawValue: `Resonance: ${v.chakras[1]}% (Raw)`, vedicThreshold: "100% (Jala Tattva Balanced)", rawNum: v.chakras[1], threshNum: 100, status: "" },
-      { parameter: "3. Maṇipūra (Solar Plexus Chakra)", source: "Navel Agni Spectrum Analysis", rawValue: `Resonance: ${v.chakras[2]}% (Raw)`, vedicThreshold: "100% (Agni Tattva Optimal)", rawNum: v.chakras[2], threshNum: 100, status: "" },
-      { parameter: "4. Anāhata (Heart Chakra)", source: "Thoracic rPPG Cardiorespiratory Scan", rawValue: `Resonance: ${v.chakras[3]}% (Raw)`, vedicThreshold: "100% (Vayu Tattva Synchronized)", rawNum: v.chakras[3], threshNum: 100, status: "" },
-      { parameter: "5. Viśuddhi (Throat Chakra)", source: "Cervical & Thyroid Acoustic Scan", rawValue: `Resonance: ${v.chakras[4]}% (Raw)`, vedicThreshold: "100% (Akasha Tattva Open)", rawNum: v.chakras[4], threshNum: 100, status: "" },
-      { parameter: "6. Ājñā (Third Eye / Forehead Read)", source: "Forehead Micro-Vessel & Neural Scan", rawValue: `Resonance: ${v.chakras[5]}% (Raw Read)`, vedicThreshold: "100% (Manas Rahasya Active)", rawNum: v.chakras[5], threshNum: 100, status: "" },
-      { parameter: "7. Sahasrāra (Crown Chakra)", source: "Upper Cranial Field Spectrum", rawValue: `Resonance: ${v.chakras[6]}% (Raw)`, vedicThreshold: "100% (Sattvic Unity Optimal)", rawNum: v.chakras[6], threshNum: 100, status: "" }
-    ];
+// =====================================================================
+// 1. REAL RPPG ENGINE (CHROM + FFT Bandpass + Peak Detection)
+// =====================================================================
+class RppgEngine {
+  constructor(fps, recordSeconds) {
+    this.fps = fps || 30;
+    this.recordSeconds = recordSeconds || 10;
+    this.targetSamples = this.fps * this.recordSeconds;
+    this.bufferSize = nextPowerOf2(this.targetSamples);
+    this.r = new Float64Array(this.bufferSize);
+    this.g = new Float64Array(this.bufferSize);
+    this.b = new Float64Array(this.bufferSize);
+    this.idx = 0;
+    this.isRecording = false;
+    this.results = null;
+  }
+  start() {
+    this.idx = 0; this.isRecording = true; this.results = null;
+    this.r.fill(0); this.g.fill(0); this.b.fill(0);
+  }
+  stop() { this.isRecording = false; }
+  addFrame(roi, ctx) {
+    if (!this.isRecording) return false;
+    if (this.idx >= this.targetSamples) return false;
+    const frame = ctx.getImageData(Math.round(roi.x), Math.round(roi.y), Math.round(roi.width), Math.round(roi.height)).data;
+    let rs = 0, gs = 0, bs = 0, count = 0;
+    for (let i = 0; i < frame.length; i += 4) { rs += frame[i]; gs += frame[i+1]; bs += frame[i+2]; count++; }
+    this.r[this.idx] = rs / count;
+    this.g[this.idx] = gs / count;
+    this.b[this.idx] = bs / count;
+    this.idx++;
+    return true;
+  }
+  isFull() { return this.idx >= this.targetSamples; }
+  compute() {
+    const n = this.bufferSize;
+    const rMean = this.r.slice(0, this.idx).reduce((a,b)=>a+b,0) / this.idx;
+    const gMean = this.g.slice(0, this.idx).reduce((a,b)=>a+b,0) / this.idx;
+    const bMean = this.b.slice(0, this.idx).reduce((a,b)=>a+b,0) / this.idx;
+    const pulse = new Float64Array(n);
+    for (let i = 0; i < this.idx; i++) {
+      const rNorm = this.r[i] / rMean;
+      const gNorm = this.g[i] / gMean;
+      const bNorm = this.b[i] / bMean;
+      pulse[i] = 3 * gNorm - 2 * rNorm - bNorm;
+    }
+    for (let i = this.idx; i < n; i++) pulse[i] = 0;
+    const detrended = this.detrend(pulse, this.idx);
+    const re = Array.from(detrended);
+    const im = new Array(n).fill(0);
+    fft(re, im, false);
+    const df = this.fps / n;
+    const lowBin = Math.floor(0.7 / df);
+    const highBin = Math.ceil(4.0 / df);
+    for (let i = 0; i < n; i++) {
+      if (i < lowBin || i > highBin) { re[i] = 0; im[i] = 0; }
+      if (i > 0 && i < n - i) { re[n-i] = 0; im[n-i] = 0; }
+    }
+    fft(re, im, true);
+    const filtered = re.map(v => v);
+    let maxMag = 0, peakBin = 0;
+    for (let i = lowBin; i <= highBin; i++) {
+      const mag = Math.sqrt(re[i]*re[i] + im[i]*im[i]);
+      if (mag > maxMag) { maxMag = mag; peakBin = i; }
+    }
+    const bpm = Math.round(peakBin * df * 60);
+    const peaks = this.findPeaks(filtered.slice(0, this.idx), this.fps);
+    const rmssd = this.computeRMSSD(peaks);
+    const env = this.envelope(detrended, this.idx);
+    const envRe = Array.from(env); const envIm = new Array(n).fill(0);
+    fft(envRe, envIm, false);
+    const respLow = Math.floor(0.1 / df);
+    const respHigh = Math.ceil(0.5 / df);
+    let respMax = 0, respPeak = 0;
+    for (let i = respLow; i <= respHigh; i++) {
+      const mag = Math.sqrt(envRe[i]*envRe[i] + envIm[i]*envIm[i]);
+      if (mag > respMax) { respMax = mag; respPeak = i; }
+    }
+    const respRate = Math.round(respPeak * df * 60);
+    let totalPower = 0, bandPower = 0;
+    for (let i = 1; i < n/2; i++) {
+      const mag = Math.sqrt(re[i]*re[i] + im[i]*im[i]);
+      totalPower += mag;
+      if (i >= lowBin && i <= highBin) bandPower += mag;
+    }
+    const quality = totalPower > 0 ? Math.round((bandPower / totalPower) * 100) : 0;
+    this.results = {
+      bpm: Math.max(40, Math.min(200, bpm)),
+      rmssd: rmssd,
+      respiratoryRate: Math.max(6, Math.min(40, respRate)),
+      signalQuality: Math.min(100, quality),
+      rawPeaks: peaks.length,
+      duration: this.idx / this.fps
+    };
+    return this.results;
+  }
+  detrend(signal, len) {
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    for (let i = 0; i < len; i++) { sumX += i; sumY += signal[i]; sumXY += i * signal[i]; sumX2 += i*i; }
+    const slope = (len * sumXY - sumX * sumY) / (len * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / len;
+    const out = new Float64Array(signal.length);
+    for (let i = 0; i < len; i++) out[i] = signal[i] - (slope * i + intercept);
+    for (let i = len; i < signal.length; i++) out[i] = 0;
+    return out;
+  }
+  findPeaks(signal, fps) {
+    const peaks = [];
+    const minDist = Math.floor(fps * 0.4);
+    let lastPeak = -minDist;
+    for (let i = 1; i < signal.length - 1; i++) {
+      if (signal[i] > signal[i-1] && signal[i] > signal[i+1] && signal[i] > 0) {
+        if (i - lastPeak >= minDist) { peaks.push(i / fps); lastPeak = i; }
+      }
+    }
+    return peaks;
+  }
+  computeRMSSD(peaks) {
+    if (peaks.length < 3) return 0;
+    const intervals = [];
+    for (let i = 1; i < peaks.length; i++) intervals.push(peaks[i] - peaks[i-1]);
+    let sumSq = 0;
+    for (let i = 1; i < intervals.length; i++) {
+      const diff = intervals[i] - intervals[i-1];
+      sumSq += diff * diff;
+    }
+    return Math.round(Math.sqrt(sumSq / (intervals.length - 1)) * 1000);
+  }
+  envelope(signal, len) {
+    const out = new Float64Array(signal.length);
+    const win = Math.floor(this.fps * 2);
+    for (let i = 0; i < len; i++) {
+      let s = 0, c = 0;
+      for (let j = Math.max(0, i - win); j <= Math.min(len - 1, i + win); j++) { s += Math.abs(signal[j]); c++; }
+      out[i] = s / c;
+    }
+    return out;
+  }
+}
 
-    // Compute statuses from rawNum vs threshNum
-    currentAnalysisRows.forEach(r => {
-      r.status = getStatus(r.rawNum, r.threshNum, r.parameter);
+// =====================================================================
+// 2. MEDICAL REPORT PARSER
+// =====================================================================
+class MedicalParser {
+  async parse(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'csv') return this.parseCSV(await file.text());
+    if (ext === 'txt') return this.parseTXT(await file.text());
+    if (ext === 'pdf') return this.parsePDF(file);
+    if (ext === 'xlsx') return this.parseXLSX(file);
+    return null;
+  }
+  parseCSV(text) {
+    const result = {};
+    const lines = text.split(/\r?\n/);
+    lines.forEach(line => {
+      const parts = line.split(',');
+      if (parts.length >= 2) this.extractVital(parts[0].trim().toLowerCase(), parts[1].trim(), result);
     });
-
-    // Render Table
-    const tableBody = document.querySelector('#comparisonTable tbody');
-    tableBody.innerHTML = currentAnalysisRows.map(r => `
-      <tr>
-        <td><strong>${r.parameter}</strong></td>
-        <td>${r.source}</td>
-        <td style="color:var(--accent); font-weight:bold;">${r.rawValue}</td>
-        <td>${r.vedicThreshold}</td>
-        <td>${r.status}</td>
-      </tr>
-    `).join('');
-
-    // Render Plotly Chart from the SAME data (single source of truth)
-    const chartParams = currentAnalysisRows.map(r => r.parameter);
-    const traceThreshold = {
-      x: chartParams,
-      y: currentAnalysisRows.map(r => r.threshNum),
-      name: 'Vedic Text Threshold (%)',
-      type: 'bar',
-      marker: { color: '#38bdf8' }
-    };
-    const traceRawScan = {
-      x: chartParams,
-      y: currentAnalysisRows.map(r => r.rawNum),
-      name: 'Raw Scanned / Medical Upload Value (%)',
-      type: 'bar',
-      marker: { color: '#f59e0b' }
-    };
-
-    const layout = {
-      title: { text: 'Raw Facial & Uploaded Scan vs Vedic Thresholds: Comparative Analysis', font: { color: '#f8fafc', size: 12 } },
-      paper_bgcolor: '#0f172a',
-      plot_bgcolor: '#070a12',
-      font: { color: '#94a3b8', size: 9 },
-      barmode: 'group',
-      margin: { t: 40, r: 20, l: 40, b: 120 },
-      xaxis: { tickangle: -35 },
-      legend: { orientation: 'h', y: -0.5 }
-    };
-
-    Plotly.newPlot('plotlyChartContainer', [traceThreshold, traceRawScan], layout, { responsive: true, displayModeBar: false });
-
-    document.getElementById('outputCard').style.display = 'block';
-    document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth' });
-  });
-
-  // --- XLSX DOWNLOAD ---
-  btnDownloadXlsx.addEventListener('click', () => {
-    if (currentAnalysisRows.length === 0) {
-      alert("Please run an evaluation first.");
-      return;
+    return result;
+  }
+  parseTXT(text) {
+    const result = {};
+    const bp = text.match(/(?:blood pressure|bp)[^\d]*(\d{2,3})\s*\/\s*(\d{2,3})/i);
+    if (bp) result.bp = bp[1] + '/' + bp[2] + ' mmHg';
+    const gl = text.match(/(?:glucose|sugar|bg)[^\d]*(\d{2,3})/i);
+    if (gl) result.glucose = gl[1] + ' mg/dL';
+    const tp = text.match(/(?:temperature|temp)[^\d]*(\d{2,3}(?:\.\d)?)/i);
+    if (tp) result.temperature = tp[1] + ' °F';
+    const hg = text.match(/(?:hemoglobin|hgb|hb)[^\d]*(\d{1,2}(?:\.\d)?)/i);
+    if (hg) result.hemoglobin = hg[1] + ' g/dL';
+    return result;
+  }
+  async parsePDF(file) {
+    if (!window.pdfjsLib) {
+      await this.loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     }
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it => it.str).join(' ') + '\n';
+    }
+    return this.parseTXT(text);
+  }
+  async parseXLSX(file) {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    const result = {};
+    data.forEach(row => { if (row.length >= 2) this.extractVital(String(row[0]).toLowerCase(), String(row[1]), result); });
+    return result;
+  }
+  extractVital(key, val, result) {
+    const bpM = val.match(/(\d{2,3})\s*\/\s*(\d{2,3})/);
+    if ((key.includes('bp') || key.includes('pressure')) && bpM) result.bp = bpM[1] + '/' + bpM[2] + ' mmHg';
+    const nM = val.match(/(\d+(?:\.\d+)?)/);
+    if (!nM) return;
+    if (key.includes('glucose') || key.includes('sugar')) result.glucose = nM[1] + ' mg/dL';
+    if (key.includes('temp')) result.temperature = nM[1] + ' °F';
+    if (key.includes('hemoglobin') || key.includes('hgb')) result.hemoglobin = nM[1] + ' g/dL';
+  }
+  loadScript(src) {
+    return new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+}
 
-    const sheetData = currentAnalysisRows.map(r => ({
-      "Parameter / Chakra Tier": r.parameter,
-      "Data Source": r.source,
-      "Raw Scanned / Uploaded Output Value": r.rawValue,
-      "Vedic Text Threshold": r.vedicThreshold,
-      "Computed Numeric Raw (%)": r.rawNum,
-      "Threshold Numeric (%)": r.threshNum,
-      "Veda Rahasya Status": r.status
-    }));
+// =====================================================================
+// 3. VEDIC THRESHOLDS & STATUS LOGIC
+// =====================================================================
+const VEDIC = {
+  heartRate: { val: 72, unit: 'BPM', label: 'Prana Vayu Baseline', range: [60, 100] },
+  hrv: { val: 50, unit: 'ms RMSSD', label: 'Autonomic Resilience', range: [30, 80] },
+  respiratoryRate: { val: 16, unit: '/min', label: 'Udana Vayu Rhythm', range: [12, 20] },
+  bp: { val: 120, unit: 'mmHg systolic', label: 'Vyana Vata Equilibrium' },
+  glucose: { val: 95, unit: 'mg/dL', label: 'Agni & Dhatu Baseline', range: [70, 100] },
+  temperature: { val: 98.6, unit: '°F', label: 'Pitta Samya Threshold', range: [97, 99.5] },
+  hemoglobin: { val: 14.0, unit: 'g/dL', label: 'Rakta Dhatu Benchmark', range: [12, 16] },
+  signalQuality: { val: 85, unit: '%', label: 'Optical Signal Integrity', range: [70, 100] }
+};
+function statusFromRange(val, rangeArr) {
+  const min = rangeArr[0], max = rangeArr[1];
+  if (val >= min && val <= max) return 'Balanced Optimal';
+  const margin = (max - min) * 0.15;
+  if (val >= min - margin && val <= max + margin) return 'Near Optimal — Monitor';
+  return 'Imbalance Detected';
+}
+function statusBP(sys) {
+  if (sys < 120) return 'Balanced Optimal';
+  if (sys < 130) return 'Elevated — Monitor';
+  if (sys < 140) return 'Stage 1 Hypertension';
+  return 'Stage 2 Hypertension — Clinical Review';
+}
 
-    const worksheet = XLSX.utils.json_to_sheet(sheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Raw Scans vs Vedic Thresholds");
+// =====================================================================
+// 4. UI CONTROLLERS
+// =====================================================================
+const video = document.getElementById('videoFeed');
+const imgPreview = document.getElementById('imagePreview');
+const overlay = document.getElementById('overlayCanvas');
+const signalCanvas = document.getElementById('signalCanvas');
+const oCtx = overlay.getContext('2d');
+const sCtx = signalCanvas.getContext('2d');
+const placeholder = document.getElementById('placeholderText');
+const scanStatus = document.getElementById('scanStatus');
+const rppgResult = document.getElementById('rppgResult');
+const fileInput = document.getElementById('fileInput');
+const reportInput = document.getElementById('medicalReportInput');
+const reportStatus = document.getElementById('reportStatus');
 
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-    
-    const downloadUrl = URL.createObjectURL(blob);
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.href = downloadUrl;
-    downloadAnchor.download = `Sastra-Dhaara-Scan-vs-Vedic-Thresholds-${Date.now()}.xlsx`;
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    document.body.removeChild(downloadAnchor);
-    URL.revokeObjectURL(downloadUrl);
-  });
+let stream = null;
+let faceModelsLoaded = false;
+let rppg = null;
+let reportData = null;
+let currentRows = [];
+let animationId = null;
+let lastFaceBox = null;
+let isRecordingRppg = false;
+
+async function loadModels() {
+  if (faceModelsLoaded) return;
+  scanStatus.textContent = 'Status: Loading face detection models...';
+  const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+  faceModelsLoaded = true;
+  scanStatus.textContent = 'Status: Face models loaded. Start camera to begin.';
+}
+loadModels();
+
+document.getElementById('btnStartCam').addEventListener('click', async () => {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+    video.style.display = 'none';
+    placeholder.style.display = 'block';
+    document.getElementById('btnStartCam').textContent = '📷 Start Camera';
+    document.getElementById('btnRecord').disabled = true;
+    if (animationId) cancelAnimationFrame(animationId);
+    scanStatus.textContent = 'Status: Camera stopped.';
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 320, facingMode: 'user' }, audio: false });
+    video.srcObject = stream;
+    video.style.display = 'block';
+    imgPreview.style.display = 'none';
+    placeholder.style.display = 'none';
+    overlay.width = 320; overlay.height = 320;
+    signalCanvas.width = 320; signalCanvas.height = 60;
+    signalCanvas.style.display = 'block';
+    document.getElementById('btnStartCam').textContent = '🛑 Stop Camera';
+    document.getElementById('btnRecord').disabled = false;
+    scanStatus.textContent = 'Status: Camera active. Face detection running...';
+    runFaceLoop();
+  } catch (e) {
+    alert('Camera error: ' + e.message);
+  }
+});
+
+async function runFaceLoop() {
+  if (!stream) return;
+  oCtx.clearRect(0, 0, 320, 320);
+  const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks();
+  if (detections.length > 0) {
+    const det = detections[0];
+    const box = det.detection.box;
+    lastFaceBox = box;
+    oCtx.strokeStyle = '#22c55e'; oCtx.lineWidth = 2;
+    oCtx.strokeRect(box.x, box.y, box.width, box.height);
+    const roi = { x: box.x + box.width * 0.2, y: box.y, width: box.width * 0.6, height: box.height * 0.25 };
+    oCtx.strokeStyle = '#f59e0b'; oCtx.lineWidth = 2;
+    oCtx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+    oCtx.fillStyle = '#f59e0b'; oCtx.font = '10px monospace';
+    oCtx.fillText('rPPG ROI', roi.x, roi.y - 4);
+    if (isRecordingRppg && rppg) {
+      const continued = rppg.addFrame(roi, oCtx);
+      if (!continued) finishRecording();
+      else drawSignalPreview();
+    }
+    scanStatus.innerHTML = '<span class="status-ok">Status: Face detected. Forehead ROI locked.</span>';
+  } else {
+    lastFaceBox = null;
+    scanStatus.innerHTML = '<span class="status-warn">Status: No face detected. Center face in frame.</span>';
+  }
+  animationId = requestAnimationFrame(runFaceLoop);
+}
+
+function drawSignalPreview() {
+  if (!rppg || rppg.idx < 2) return;
+  sCtx.fillStyle = '#000'; sCtx.fillRect(0, 0, 320, 60);
+  sCtx.strokeStyle = '#22c55e'; sCtx.beginPath();
+  const gData = rppg.g;
+  const start = Math.max(0, rppg.idx - 300);
+  const min = Math.min(...gData.slice(start, rppg.idx));
+  const max = Math.max(...gData.slice(start, rppg.idx));
+  const range = max - min || 1;
+  for (let i = 0; i < Math.min(300, rppg.idx - start); i++) {
+    const x = (i / 300) * 320;
+    const y = 60 - ((gData[start + i] - min) / range) * 50 - 5;
+    if (i === 0) sCtx.moveTo(x, y); else sCtx.lineTo(x, y);
+  }
+  sCtx.stroke();
+  sCtx.fillStyle = '#f59e0b'; sCtx.fillText('Recording: ' + rppg.idx + '/' + rppg.targetSamples, 4, 12);
+}
+
+document.getElementById('btnRecord').addEventListener('click', async () => {
+  if (!faceModelsLoaded) { alert('Face models still loading. Please wait.'); return; }
+  if (!stream) { alert('Start camera first.'); return; }
+  if (isRecordingRppg) return;
+  rppg = new RppgEngine(30, 10);
+  rppg.start();
+  isRecordingRppg = true;
+  document.getElementById('btnRecord').disabled = true;
+  document.getElementById('btnRecord').textContent = '⏹️ Recording...';
+  scanStatus.innerHTML = '<span class="status-warn">Status: Recording 10s rPPG... keep face steady.</span>';
+  setTimeout(() => { if (isRecordingRppg) finishRecording(); }, 10500);
+});
+
+function finishRecording() {
+  isRecordingRppg = false;
+  if (rppg) {
+    const res = rppg.compute();
+    document.getElementById('btnRecord').textContent = '⏺️ Record 10s rPPG';
+    document.getElementById('btnRecord').disabled = false;
+    rppgResult.style.display = 'block';
+    rppgResult.innerHTML = '<span class="status-ok">rPPG Complete — HR: ' + res.bpm + ' BPM · HRV: ' + res.rmssd + ' ms · RR: ' + res.respiratoryRate + ' /min · Quality: ' + res.signalQuality + '%</span>';
+    scanStatus.innerHTML = '<span class="status-ok">Status: rPPG recording complete. Ready for evaluation.</span>';
+  }
+}
+
+document.getElementById('btnUploadTrigger').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+    if (animationId) cancelAnimationFrame(animationId);
+    document.getElementById('btnStartCam').textContent = '📷 Start Camera';
+    document.getElementById('btnRecord').disabled = true;
+  }
+  video.style.display = 'none';
+  placeholder.style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    imgPreview.src = evt.target.result;
+    imgPreview.style.display = 'block';
+    imgPreview.onload = () => {
+      overlay.width = 320; overlay.height = 320;
+      oCtx.drawImage(imgPreview, 0, 0, 320, 320);
+      oCtx.strokeStyle = '#f59e0b'; oCtx.lineWidth = 2;
+      oCtx.strokeRect(80, 40, 160, 80);
+      oCtx.fillText('Static Image — rPPG unavailable', 82, 35);
+    };
+    scanStatus.innerHTML = '<span class="status-warn">Status: Static image loaded. rPPG requires video stream — use camera for HR/HRV.</span>';
+    rppg = null;
+  };
+  reader.readAsDataURL(file);
+});
+
+reportInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  reportStatus.textContent = 'Status: Parsing ' + file.name + '...';
+  const parser = new MedicalParser();
+  reportData = await parser.parse(file);
+  const keys = reportData ? Object.keys(reportData) : [];
+  if (keys.length > 0) {
+    reportStatus.innerHTML = '<span class="status-ok">Status: Parsed ' + keys.length + ' values — ' + keys.map(k => k + ': ' + reportData[k]).join(' · ') + '</span>';
+  } else {
+    reportStatus.innerHTML = '<span class="status-warn">Status: No parseable vitals found in report. Ensure CSV/TXT has keys like BP, Glucose, Temp, Hemoglobin.</span>';
+  }
+});
+
+// =====================================================================
+// 5. EVALUATION ENGINE — SINGLE SOURCE OF TRUTH
+// =====================================================================
+document.getElementById('btnEvaluate').addEventListener('click', () => {
+  const rows = [];
+  const hasRppg = rppg && rppg.results;
+  const hasReport = reportData && Object.keys(reportData).length > 0;
+  const hasImage = imgPreview.style.display === 'block';
+  if (!hasRppg && !hasReport && !hasImage) {
+    alert('Please capture an rPPG video recording or upload a medical report first.');
+    return;
+  }
+  if (hasRppg) {
+    const r = rppg.results;
+    rows.push({ param: 'Heart Rate (BPM)', source: 'Webcam rPPG — Forehead Optical Pulse', rawVal: r.bpm + ' BPM', rawNum: r.bpm, threshold: VEDIC.heartRate.val + ' BPM (' + VEDIC.heartRate.label + ')', threshNum: VEDIC.heartRate.val, status: statusFromRange(r.bpm, VEDIC.heartRate.range) });
+    rows.push({ param: 'Heart Rate Variability (HRV)', source: 'Webcam rPPG — Peak Interval Analysis', rawVal: r.rmssd + ' ms RMSSD', rawNum: r.rmssd, threshold: VEDIC.hrv.val + ' ms (' + VEDIC.hrv.label + ')', threshNum: VEDIC.hrv.val, status: statusFromRange(r.rmssd, VEDIC.hrv.range) });
+    rows.push({ param: 'Respiratory Rate', source: 'Webcam rPPG — Envelope Modulation', rawVal: r.respiratoryRate + ' /min', rawNum: r.respiratoryRate, threshold: VEDIC.respiratoryRate.val + ' /min (' + VEDIC.respiratoryRate.label + ')', threshNum: VEDIC.respiratoryRate.val, status: statusFromRange(r.respiratoryRate, VEDIC.respiratoryRate.range) });
+    rows.push({ param: 'Optical Signal Quality', source: 'Webcam rPPG — Spectral Purity Index', rawVal: r.signalQuality + '%', rawNum: r.signalQuality, threshold: VEDIC.signalQuality.val + '% (' + VEDIC.signalQuality.label + ')', threshNum: VEDIC.signalQuality.val, status: statusFromRange(r.signalQuality, VEDIC.signalQuality.range) });
+  } else {
+    rows.push({ param: 'Heart Rate / HRV / Respiratory Rate', source: 'Webcam rPPG — Not Recorded', rawVal: 'No video stream', rawNum: 0, threshold: 'Requires 10s forehead video', threshNum: 100, status: 'Use camera + Record button' });
+  }
+  if (hasReport) {
+    if (reportData.bp) {
+      const sys = parseInt(reportData.bp.split('/')[0]);
+      rows.push({ param: 'Blood Pressure (BP)', source: 'Uploaded Medical Report', rawVal: reportData.bp, rawNum: sys, threshold: '120/80 mmHg (Vyana Vata Equilibrium)', threshNum: 120, status: statusBP(sys) });
+    }
+    if (reportData.glucose) {
+      const v = parseFloat(reportData.glucose);
+      rows.push({ param: 'Blood Sugar / Glucose', source: 'Uploaded Medical Report', rawVal: reportData.glucose, rawNum: v, threshold: VEDIC.glucose.val + ' mg/dL (' + VEDIC.glucose.label + ')', threshNum: VEDIC.glucose.val, status: statusFromRange(v, VEDIC.glucose.range) });
+    }
+    if (reportData.temperature) {
+      const v = parseFloat(reportData.temperature);
+      rows.push({ param: 'Core Body Temperature', source: 'Uploaded Medical Report', rawVal: reportData.temperature, rawNum: v, threshold: VEDIC.temperature.val + ' °F (' + VEDIC.temperature.label + ')', threshNum: VEDIC.temperature.val, status: statusFromRange(v, VEDIC.temperature.range) });
+    }
+    if (reportData.hemoglobin) {
+      const v = parseFloat(reportData.hemoglobin);
+      rows.push({ param: 'Blood Levels (Hemoglobin)', source: 'Uploaded Medical Report', rawVal: reportData.hemoglobin, rawNum: v, threshold: VEDIC.hemoglobin.val + ' g/dL (' + VEDIC.hemoglobin.label + ')', threshNum: VEDIC.hemoglobin.val, status: statusFromRange(v, VEDIC.hemoglobin.range) });
+    }
+  }
+  if (!reportData || !reportData.bp) {
+    rows.push({ param: 'Blood Pressure (BP)', source: 'Clinical Device Required', rawVal: 'Not measurable via webcam', rawNum: 0, threshold: '120/80 mmHg (Vyana Vata)', threshNum: 100, status: 'Upload report or use BP cuff' });
+  }
+  if (!reportData || !reportData.glucose) {
+    rows.push({ param: 'Blood Sugar / Glucose', source: 'Clinical Device Required', rawVal: 'Not measurable via webcam', rawNum: 0, threshold: '95 mg/dL (Agni & Dhatu)', threshNum: 100, status: 'Upload report or use glucometer' });
+  }
+  if (!reportData || !reportData.temperature) {
+    rows.push({ param: 'Core Body Temperature', source: 'Clinical Device Required', rawVal: 'Not measurable via webcam', rawNum: 0, threshold: '98.6 °F (Pitta Samya)', threshNum: 100, status: 'Upload report or use thermometer' });
+  }
+  if (!reportData || !reportData.hemoglobin) {
+    rows.push({ param: 'Blood Levels (Hemoglobin)', source: 'Clinical Device Required', rawVal: 'Not measurable via webcam', rawNum: 0, threshold: '14.0 g/dL (Rakta Dhatu)', threshNum: 100, status: 'Upload report or blood test' });
+  }
+  rows.push({ param: 'SPECT Perfusion Scan', source: 'Nuclear Medicine Facility Required', rawVal: 'Gamma camera + radiotracer', rawNum: 0, threshold: 'Dhatu-level metabolic mapping', threshNum: 100, status: 'Clinical imaging center only' });
+  if (hasRppg) {
+    const r = rppg.results;
+    const hrPct = Math.min(100, Math.round((r.bpm / 72) * 100));
+    const hrvPct = Math.min(100, Math.round((r.rmssd / 50) * 100));
+    const rrPct = Math.min(100, Math.round((r.respiratoryRate / 16) * 100));
+    const sqPct = r.signalQuality;
+    rows.push({ param: '1. Mūlādhāra (Root)', source: 'Proxy: HRV Grounding Stability', rawVal: hrvPct + '% (HRV proxy)', rawNum: hrvPct, threshold: '100% (Prthvi Tattva)', threshNum: 100, status: statusFromRange(r.rmssd, [30, 80]) });
+    rows.push({ param: '2. Svādhiṣṭhāna (Sacral)', source: 'Proxy: HRV Fluid Resilience', rawVal: hrvPct + '% (HRV proxy)', rawNum: hrvPct, threshold: '100% (Jala Tattva)', threshNum: 100, status: statusFromRange(r.rmssd, [30, 80]) });
+    rows.push({ param: '3. Maṇipūra (Solar Plexus)', source: 'Proxy: Respiratory Agni Rate', rawVal: rrPct + '% (RR proxy)', rawNum: rrPct, threshold: '100% (Agni Tattva)', threshNum: 100, status: statusFromRange(r.respiratoryRate, [12, 20]) });
+    rows.push({ param: '4. Anāhata (Heart)', source: 'Proxy: Real HR Coherence', rawVal: hrPct + '% (HR proxy)', rawNum: hrPct, threshold: '100% (Vayu Tattva)', threshNum: 100, status: statusFromRange(r.bpm, [60, 100]) });
+    rows.push({ param: '5. Viśuddhi (Throat)', source: 'Proxy: Signal Clarity Index', rawVal: sqPct + '% (Quality proxy)', rawNum: sqPct, threshold: '100% (Akasha Tattva)', threshNum: 100, status: statusFromRange(r.signalQuality, [70, 100]) });
+    rows.push({ param: '6. Ājñā (Third Eye)', source: 'Proxy: Forehead rPPG Signal', rawVal: sqPct + '% (Forehead proxy)', rawNum: sqPct, threshold: '100% (Manas Rahasya)', threshNum: 100, status: statusFromRange(r.signalQuality, [70, 100]) });
+    rows.push({ param: '7. Sahasrāra (Crown)', source: 'Proxy: Integrated Neural Resilience', rawVal: hrvPct + '% (HRV proxy)', rawNum: hrvPct, threshold: '100% (Sattvic Unity)', threshNum: 100, status: statusFromRange(r.rmssd, [30, 80]) });
+  } else {
+    const names = ['Mūlādhāra','Svādhiṣṭhāna','Maṇipūra','Anāhata','Viśuddhi','Ājñā','Sahasrāra'];
+    names.forEach((name, i) => {
+      rows.push({ param: (i+1) + '. ' + name, source: 'Proxy: rPPG not recorded', rawVal: 'No data', rawNum: 0, threshold: '100%', threshNum: 100, status: 'Record 10s rPPG first' });
+    });
+  }
+  currentRows = rows;
+  const tbody = document.querySelector('#comparisonTable tbody');
+  tbody.innerHTML = rows.map(r => {
+    const srcClass = r.source.includes('Webcam') ? 'source-webcam' : r.source.includes('Report') ? 'source-report' : r.source.includes('Clinical') || r.source.includes('Nuclear') ? 'source-clinical' : 'source-proxy';
+    return '<tr><td><strong>' + r.param + '</strong></td><td class="' + srcClass + '">' + r.source + '</td><td style="color:var(--accent); font-weight:bold;">' + r.rawVal + '</td><td>' + r.threshold + '</td><td>' + r.status + '</td></tr>';
+  }).join('');
+  const chartParams = rows.map(r => r.param);
+  const traceThresh = { x: chartParams, y: rows.map(r => r.threshNum), name: 'Vedic Threshold', type: 'bar', marker: { color: '#38bdf8' } };
+  const traceRaw = { x: chartParams, y: rows.map(r => r.rawNum), name: 'Real Measurement', type: 'bar', marker: { color: '#f59e0b' } };
+  Plotly.newPlot('plotlyChartContainer', [traceThresh, traceRaw], {
+    title: { text: 'Real Measurements vs Vedic Thresholds', font: { color: '#f8fafc', size: 12 } },
+    paper_bgcolor: '#0f172a', plot_bgcolor: '#070a12', font: { color: '#94a3b8', size: 9 },
+    barmode: 'group', margin: { t: 40, r: 20, l: 40, b: 140 }, xaxis: { tickangle: -45 }, legend: { orientation: 'h', y: -0.6 }
+  }, { responsive: true, displayModeBar: false });
+  document.getElementById('outputCard').style.display = 'block';
+  document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth' });
+});
+
+// =====================================================================
+// 6. XLSX EXPORT
+// =====================================================================
+document.getElementById('btnDownloadXlsx').addEventListener('click', () => {
+  if (!currentRows.length) { alert('Run evaluation first.'); return; }
+  const data = currentRows.map(r => ({
+    'Parameter': r.param, 'Data Source': r.source, 'Raw Value': r.rawVal,
+    'Numeric Raw': r.rawNum, 'Vedic Threshold': r.threshold, 'Threshold Numeric': r.threshNum, 'Status': r.status
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Real vs Vedic');
+  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'SastraDhaara-Real-Data-' + Date.now() + '.xlsx';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
 </script>
-
 </body>
 </html>
