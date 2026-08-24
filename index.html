@@ -31,7 +31,10 @@
     .btn-cal { background:#7c3aed; color:#fff; flex:1; }
     .row { display:flex; gap:8px; margin-top:10px; }
     .media-box { position:relative; width:320px; height:320px; background:#000; border-radius:8px; border:1px solid var(--border); overflow:hidden; margin:8px auto; }
-    video, canvas, img { position:absolute; width:100%; height:100%; object-fit:cover; }
+    .media-box > video, .media-box > canvas, .media-box > img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
+    .sig-preview { position:relative !important; width:100%; height:60px; background:#000; border:1px solid var(--border); border-radius:4px; margin-top:6px; }
+    .dicom-viewer > canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
+    .btn { cursor:pointer; position:relative; z-index:10; }
     .sig-preview { width:100%; height:60px; background:#000; border:1px solid var(--border); border-radius:4px; margin-top:6px; }
     .status { font-size:11px; font-family:monospace; color:var(--sub); margin-top:4px; }
     .st-ok { color:var(--ok); }
@@ -52,7 +55,7 @@
     .disclaimer strong { color:var(--accent); }
     .ble-device { background:var(--bg); border:1px solid var(--border); padding:10px; border-radius:5px; margin-top:8px; }
     .ble-device h4 { margin:0 0 6px 0; color:var(--accent2); font-size:12px; }
-    .dicom-viewer { width:100%; height:280px; background:#000; border:1px solid var(--border); border-radius:5px; margin-top:8px; position:relative; }
+    .dicom-viewer { width:100%; height:280px; background:#000; border:1px solid var(--border); border-radius:5px; margin-top:8px; position:relative; overflow:hidden; }
     .cal-panel { background:var(--bg); border:1px solid var(--border); padding:10px; border-radius:5px; margin-top:8px; display:none; }
     .cal-panel.active { display:block; }
   </style>
@@ -493,11 +496,16 @@ const bpEst = new BpEstimator();
 async function loadFace() {
   if (faceLoaded) return;
   scanSt.textContent = 'Status: Loading face detection models...';
-  const url = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
-  await faceapi.nets.tinyFaceDetector.loadFromUri(url);
-  await faceapi.nets.faceLandmark68Net.loadFromUri(url);
-  faceLoaded = true;
-  scanSt.textContent = 'Status: Face models loaded. Start camera.';
+  try {
+    const url = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(url);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(url);
+    faceLoaded = true;
+    scanSt.textContent = 'Status: Face models loaded. Start camera.';
+  } catch (e) {
+    scanSt.innerHTML = '<span class="st-warn">Face models failed to load (CDN blocked?). Camera will use fixed ROI.</span>';
+    faceLoaded = false;
+  }
 }
 loadFace();
 
@@ -529,18 +537,31 @@ document.getElementById('btnCam').addEventListener('click', async () => {
 async function faceLoop() {
   if (!stream) return;
   oCtx.clearRect(0, 0, 320, 320);
-  const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks();
-  if (dets.length > 0) {
-    const box = dets[0].detection.box;
-    oCtx.strokeStyle = '#22c55e'; oCtx.lineWidth = 2; oCtx.strokeRect(box.x, box.y, box.width, box.height);
-    const roi = { x: box.x + box.width * 0.2, y: box.y, w: box.width * 0.6, h: box.height * 0.25 };
-    oCtx.strokeStyle = '#f59e0b'; oCtx.lineWidth = 2; oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
-    oCtx.fillStyle = '#f59e0b'; oCtx.font = '10px monospace'; oCtx.fillText('rPPG ROI', roi.x, roi.y - 4);
-    if (isRec && rppg) { const c = rppg.addFrame(roi, oCtx); if (!c) finishRec(); else drawSig(); }
-    scanSt.innerHTML = '<span class="st-ok">Face detected. Forehead ROI locked.</span>';
-  } else {
-    scanSt.innerHTML = '<span class="st-warn">No face detected. Center face in frame.</span>';
+  let roi = null;
+  if (faceLoaded) {
+    try {
+      const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks();
+      if (dets.length > 0) {
+        const box = dets[0].detection.box;
+        oCtx.strokeStyle = '#22c55e'; oCtx.lineWidth = 2; oCtx.strokeRect(box.x, box.y, box.width, box.height);
+        roi = { x: box.x + box.width * 0.2, y: box.y, w: box.width * 0.6, h: box.height * 0.25 };
+        oCtx.strokeStyle = '#f59e0b'; oCtx.lineWidth = 2; oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
+        oCtx.fillStyle = '#f59e0b'; oCtx.font = '10px monospace'; oCtx.fillText('rPPG ROI', roi.x, roi.y - 4);
+        scanSt.innerHTML = '<span class="st-ok">Face detected. Forehead ROI locked.</span>';
+      } else {
+        scanSt.innerHTML = '<span class="st-warn">No face detected. Center face in frame.</span>';
+      }
+    } catch (e) {
+      scanSt.innerHTML = '<span class="st-warn">Face detection error. Using fixed ROI.</span>';
+    }
   }
+  if (!roi) {
+    // Fixed forehead ROI when face detection unavailable
+    roi = { x: 80, y: 40, w: 160, h: 80 };
+    oCtx.strokeStyle = '#f59e0b'; oCtx.lineWidth = 2; oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
+    oCtx.fillStyle = '#f59e0b'; oCtx.font = '10px monospace'; oCtx.fillText('Fixed rPPG ROI (no face detection)', roi.x, roi.y - 4);
+  }
+  if (isRec && rppg) { const c = rppg.addFrame(roi, oCtx); if (!c) finishRec(); else drawSig(); }
   animId = requestAnimationFrame(faceLoop);
 }
 
