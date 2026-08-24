@@ -988,7 +988,7 @@ document.getElementById("btnEval").addEventListener("click", async () => {
     else if (r.source.includes("Medical Report")) cls = "src-report";
     else if (r.source.includes("DICOM")) cls = "src-dicom";
     else if (r.source.includes("Required") || r.source.includes("Facility")) cls = "src-impossible";
-    return "<tr><td><strong>" + r.param + "</strong></td><td class="" + cls + "">" + r.source + "</td><td style="color:var(--accent); font-weight:bold;">" + r.rawVal + "</td><td>" + r.thresh + "</td><td>" + r.status + "</td></tr>";
+    return '<tr><td><strong>' + r.param + '</strong></td><td class="' + cls + '">' + r.source + '</td><td style="color:var(--accent); font-weight:bold;">' + r.rawVal + '</td><td>' + r.thresh + '</td><td>' + r.status + '</td></tr>';
   }).join("");
 
   const cParams = rows.map(r => r.param);
