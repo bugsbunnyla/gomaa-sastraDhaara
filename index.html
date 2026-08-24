@@ -233,33 +233,20 @@ class RppgEngine {
     const rM = this.r.slice(0, m).reduce((a, b) => a + b, 0) / m;
     const gM = this.g.slice(0, m).reduce((a, b) => a + b, 0) / m;
     const bM = this.b.slice(0, m).reduce((a, b) => a + b, 0) / m;
-
-    // CHROM projection
     const pulse = new Float64Array(n);
     for (let i = 0; i < m; i++) pulse[i] = 3 * (this.g[i] / gM) - 2 * (this.r[i] / rM) - (this.b[i] / bM);
-
-    // Detrend + Hann window to reduce spectral leakage
     const det = this.detrend(pulse, m);
     const win = this.hannWindow(m);
     for (let i = 0; i < m; i++) det[i] *= win[i];
-
-    // FFT
     const re = Array.from(det), im = new Array(n).fill(0);
     fft(re, im, false);
-
     const df = this.fps / n;
-    const lo = Math.floor(0.5 / df), hi = Math.ceil(4.0 / df); // 30-240 BPM
-
-    // Compute magnitude spectrum
+    const lo = Math.floor(0.5 / df), hi = Math.ceil(4.0 / df);
     const mag = new Float64Array(n);
     for (let i = 0; i < n; i++) mag[i] = Math.sqrt(re[i]*re[i] + im[i]*im[i]);
-
-    // ROBUST PEAK DETECTION: find peaks with prominence in cardiac band
     const peaks = this.findSpectralPeaks(mag, lo, hi, df);
     let bpm = 0, peakBin = 0, maxM = 0;
-
     if (peaks.length > 0) {
-      // Prefer peak with harmonic support (2nd harmonic visible)
       let best = peaks[0];
       for (const p of peaks) {
         const h2 = Math.round(p.bin * 2);
@@ -270,15 +257,10 @@ class RppgEngine {
       peakBin = best.bin;
       maxM = best.mag;
     } else {
-      // Fallback: simple max
       for (let i = lo; i <= hi; i++) { if (mag[i] > maxM) { maxM = mag[i]; peakBin = i; } }
       bpm = Math.round(peakBin * df * 60);
     }
-
-    // Clamp and time-domain cross-check
     bpm = Math.max(40, Math.min(200, bpm));
-
-    // Bandpass filter for time-domain analysis (0.5-4.0 Hz = 30-240 BPM)
     const filtRe = Array.from(det), filtIm = new Array(n).fill(0);
     fft(filtRe, filtIm, false);
     for (let i = 0; i < n; i++) {
@@ -287,21 +269,14 @@ class RppgEngine {
     }
     fft(filtRe, filtIm, true);
     const filt = filtRe.map(v => v);
-
-    // Time-domain peak detection for HRV
     const tPeaks = this.findPeaks(filt.slice(0, m), this.fps);
     const tdBpm = Math.round(tPeaks.length / (m / this.fps) * 60);
-
-    // If FFT and time-domain disagree by >15 BPM, trust time-domain (more robust)
     if (Math.abs(bpm - tdBpm) > 15 && tPeaks.length >= 3) {
       bpm = tdBpm;
       peakBin = Math.round((bpm / 60) / df);
       maxM = mag[peakBin] || maxM;
     }
-
     const rmssd = this.calcRMSSD(tPeaks);
-
-    // Respiratory rate: envelope + FFT in 0.1-0.5 Hz
     const env = this.envelope(det, m);
     const eRe = Array.from(env), eIm = new Array(n).fill(0);
     fft(eRe, eIm, false);
@@ -318,20 +293,14 @@ class RppgEngine {
       rr = Math.round(rPeak * df * 60);
     }
     rr = Math.max(8, Math.min(30, rr));
-
-    // Signal quality: spectral purity ratio
     let tot = 0, band = 0;
     for (let i = 1; i < n / 2; i++) { tot += mag[i]; if (i >= lo && i <= hi) band += mag[i]; }
     const sq = tot > 0 ? Math.round((band / tot) * 100) : 0;
-
-    // Motion artifact rejection: if signal variance is too high, reduce SQ
     const sigVar = this.variance(det, m);
     const adjSq = sigVar > 0.5 ? Math.round(sq * 0.6) : sq;
-
     const pulseAmp = maxM;
     const riseTime = this.calcRiseTime(filt, m, this.fps);
     const specEnt = this.spectralEntropy(mag, lo, hi);
-
     this.res = {
       bpm, rmssd, rr, sq: Math.min(100, adjSq),
       peaks: tPeaks.length, dur: m / this.fps,
@@ -665,8 +634,7 @@ document.getElementById("btnCam").addEventListener("click", async () => {
     overlay.style.display = "block";
     overlay.width = 320; overlay.height = 320;
     sigCan.width = 320; sigCan.height = 60;
-    // Ensure video starts playing (some browsers need explicit play())
-    try { await video.play(); } catch (playErr) { /* autoplay may already be running */ }
+    try { await video.play(); } catch (playErr) {}
     document.getElementById("btnCam").textContent = "🛑 Stop Camera";
     document.getElementById("btnRec").disabled = false;
     document.getElementById("btnRec").textContent = "⏺️ Record 10s";
@@ -901,7 +869,6 @@ document.getElementById("reportInput").addEventListener("change", async (e) => {
 // ========================================================================
 // 17. EVALUATION ENGINE
 // ========================================================================
-// CORRECTED: Chakra proxy uses deviation from optimal, not ratio
 function chakraPct(value, optimal, range) {
   const maxDev = Math.max(optimal - range[0], range[1] - optimal);
   const dev = Math.abs(value - optimal);
@@ -921,7 +888,6 @@ document.getElementById("btnEval").addEventListener("click", async () => {
     return;
   }
 
-  // --- REAL RPPG ---
   if (hasRppg) {
     const r = rppg.res;
     rows.push({ param: "Heart Rate (BPM)", source: "Webcam rPPG — Forehead green-channel CHROM projection + FFT spectral peak", rawVal: r.bpm + " BPM", rawNum: r.bpm, thresh: VEDIC.hr.val + " BPM (" + VEDIC.hr.label + ")", threshNum: VEDIC.hr.val, status: inRange(r.bpm, VEDIC.hr.range) });
@@ -933,7 +899,6 @@ document.getElementById("btnEval").addEventListener("click", async () => {
     rows.push({ param: "Heart Rate / HRV / RR / Quality", source: "Webcam rPPG — Not Recorded", rawVal: "No video stream", rawNum: 0, thresh: "Requires 10s forehead video", threshNum: 100, status: "Use camera + Record button" });
   }
 
-  // --- BLUETOOTH ---
   if (hasBle) {
     if (bleData.bp) { const sys = parseInt(bleData.bp.split("/")[0]); rows.push({ param: "Blood Pressure (BP)", source: "Bluetooth Medical Device — Real Cuff", rawVal: bleData.bp, rawNum: sys, thresh: "120/80 mmHg (" + VEDIC.bp.label + ")", threshNum: 120, status: bpStatus(sys) }); }
     if (bleData.glucose) { const v = parseFloat(bleData.glucose); rows.push({ param: "Blood Sugar / Glucose", source: "Bluetooth Medical Device — Real Glucometer", rawVal: bleData.glucose, rawNum: v, thresh: VEDIC.glucose.val + " mg/dL (" + VEDIC.glucose.label + ")", threshNum: VEDIC.glucose.val, status: inRange(v, VEDIC.glucose.range) }); }
@@ -941,14 +906,12 @@ document.getElementById("btnEval").addEventListener("click", async () => {
     if (bleData.spo2) { const v = parseFloat(bleData.spo2); rows.push({ param: "Blood Oxygen (SpO2)", source: "Bluetooth Medical Device — Real Pulse Oximeter", rawVal: bleData.spo2, rawNum: v, thresh: VEDIC.spo2.val + "% (" + VEDIC.spo2.label + ")", threshNum: VEDIC.spo2.val, status: inRange(v, VEDIC.spo2.range) }); }
   }
 
-  // --- ML BP ESTIMATE ---
   let mlBp = null;
   if (hasRppg && bpEst.calibrations.length >= 2) {
     mlBp = bpEst.predict(rppg.res.features);
     if (mlBp) rows.push({ param: "Blood Pressure (BP)", source: "ML Neural Network — rPPG Feature Estimate (Calibrated)", rawVal: mlBp.sys + "/" + mlBp.dia + " mmHg (ML Estimate)", rawNum: mlBp.sys, thresh: "120/80 mmHg (" + VEDIC.bp.label + ")", threshNum: 120, status: bpStatus(mlBp.sys) });
   }
 
-  // --- REPORT PARSE ---
   if (hasReport) {
     if (reportData.bp) { const sys = parseInt(reportData.bp.split("/")[0]); rows.push({ param: "Blood Pressure (BP)", source: "Uploaded Medical Report", rawVal: reportData.bp, rawNum: sys, thresh: "120/80 mmHg (" + VEDIC.bp.label + ")", threshNum: 120, status: bpStatus(sys) }); }
     if (reportData.glucose) { const v = parseFloat(reportData.glucose); rows.push({ param: "Blood Sugar / Glucose", source: "Uploaded Medical Report", rawVal: reportData.glucose, rawNum: v, thresh: VEDIC.glucose.val + " mg/dL (" + VEDIC.glucose.label + ")", threshNum: VEDIC.glucose.val, status: inRange(v, VEDIC.glucose.range) }); }
@@ -957,7 +920,6 @@ document.getElementById("btnEval").addEventListener("click", async () => {
     if (reportData.spo2) { const v = parseFloat(reportData.spo2); rows.push({ param: "Blood Oxygen (SpO2)", source: "Uploaded Medical Report", rawVal: reportData.spo2, rawNum: v, thresh: VEDIC.spo2.val + "% (" + VEDIC.spo2.label + ")", threshNum: VEDIC.spo2.val, status: inRange(v, VEDIC.spo2.range) }); }
   }
 
-  // --- HONEST "NOT AVAILABLE" ---
   const hasBpReal = (hasBle && bleData.bp) || (hasReport && reportData.bp) || mlBp;
   const hasGlReal = (hasBle && bleData.glucose) || (hasReport && reportData.glucose);
   const hasTempReal = (hasBle && bleData.temperature) || (hasReport && reportData.temperature);
@@ -970,21 +932,18 @@ document.getElementById("btnEval").addEventListener("click", async () => {
   if (!hasHgbReal) rows.push({ param: "Blood Levels (Hemoglobin)", source: "Blood Test / Report Required", rawVal: "Not measured", rawNum: 0, thresh: VEDIC.hgb.val + " g/dL (" + VEDIC.hgb.label + ")", threshNum: VEDIC.hgb.val, status: "Upload lab report with Hgb value" });
   if (!hasSpo2Real) rows.push({ param: "Blood Oxygen (SpO2)", source: "Pulse Oximeter / Report Required", rawVal: "Not measured", rawNum: 0, thresh: VEDIC.spo2.val + "% (" + VEDIC.spo2.label + ")", threshNum: VEDIC.spo2.val, status: "Connect BLE oximeter or upload report" });
 
-  // --- DICOM ---
   if (hasDicom) {
     rows.push({ param: "Medical Imaging (" + dicomData.modality + ")", source: "DICOM Upload — Clinical Imaging", rawVal: dicomData.rows + "x" + dicomData.cols + " · " + (dicomData.studyDesc || "Clinical scan"), rawNum: 100, thresh: "Dhatu-level metabolic mapping", threshNum: 100, status: "Clinical image loaded — consult radiologist" });
   } else {
     rows.push({ param: "SPECT / CT / MRI Imaging", source: "Nuclear Medicine / Radiology Facility Required", rawVal: "No DICOM uploaded", rawNum: 0, thresh: "Gamma camera + radiotracer / X-ray scanner", threshNum: 100, status: "Upload DICOM from hospital or imaging center" });
   }
 
-  // --- CHAKRA PROXIES — CORRECTED DEVIATION-BASED PERCENTAGES ---
   if (hasRppg) {
     const r = rppg.res;
     const hrPct = chakraPct(r.bpm, VEDIC.hr.val, VEDIC.hr.range);
     const hrvPct = chakraPct(r.rmssd, VEDIC.hrv.val, VEDIC.hrv.range);
     const rrPct = chakraPct(r.rr, VEDIC.rr.val, VEDIC.rr.range);
     const sqPct = chakraPct(r.sq, VEDIC.sq.val, VEDIC.sq.range);
-
     rows.push({ param: "1. Muladhara (Root)", source: "Proxy: HRV grounding proxy", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Prthvi Tattva)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
     rows.push({ param: "2. Svadhisthana (Sacral)", source: "Proxy: HRV grounding proxy", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Jala Tattva)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
     rows.push({ param: "3. Manipura (Solar Plexus)", source: "Proxy: Respiratory rate proxy", rawVal: rrPct + "% (RR proxy)", rawNum: rrPct, thresh: "100% (Agni Tattva)", threshNum: 100, status: inRange(r.rr, [12, 20]) });
@@ -999,7 +958,6 @@ document.getElementById("btnEval").addEventListener("click", async () => {
 
   currentRows = rows;
 
-  // Render table
   const tbody = document.querySelector("#compTable tbody");
   tbody.innerHTML = rows.map(r => {
     let cls = "src-proxy";
@@ -1012,7 +970,6 @@ document.getElementById("btnEval").addEventListener("click", async () => {
     return "<tr><td><strong>" + r.param + "</strong></td><td class="" + cls + "">" + r.source + "</td><td style="color:var(--accent); font-weight:bold;">" + r.rawVal + "</td><td>" + r.thresh + "</td><td>" + r.status + "</td></tr>";
   }).join("");
 
-  // Render chart
   const cParams = rows.map(r => r.param);
   const tThresh = { x: cParams, y: rows.map(r => r.threshNum), name: "Vedic Threshold", type: "bar", marker: { color: "#38bdf8" } };
   const tRaw = { x: cParams, y: rows.map(r => r.rawNum), name: "Real Measurement", type: "bar", marker: { color: "#f59e0b" } };
