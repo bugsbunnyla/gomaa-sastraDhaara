@@ -170,6 +170,7 @@ th { background:#1e293b; color:var(--accent); }
 </div>
 
 <script>
+"use strict";
 // ========================================================================
 // 0. FFT (Radix-2 Cooley-Tukey)
 // ========================================================================
@@ -202,7 +203,7 @@ function fft(re, im, invert) {
 function np2(n) { return Math.pow(2, Math.ceil(Math.log2(n))); }
 
 // ========================================================================
-// 1. REAL RPPG ENGINE (CHROM + FFT + Robust Peak Detection)
+// 1. REAL RPPG ENGINE
 // ========================================================================
 class RppgEngine {
   constructor(fps, sec) {
@@ -637,9 +638,7 @@ document.getElementById("btnCam").addEventListener("click", async () => {
     document.getElementById("btnRec").disabled = false;
     document.getElementById("btnRec").textContent = "⏺️ Record 10s";
     scanSt.textContent = "Status: Camera active. " + (faceLoaded ? "Face detection starting..." : "Using fixed forehead ROI.");
-    // Start render loop (sync, 60fps)
     faceLoop();
-    // Start face detection loop (async, throttled to 200ms)
     if (faceLoaded) {
       faceTimer = setInterval(detectFace, 200);
     }
@@ -650,7 +649,7 @@ document.getElementById("btnCam").addEventListener("click", async () => {
 });
 
 // ========================================================================
-// 10. FACE DETECTION (async, throttled — runs every 200ms)
+// 10. FACE DETECTION (async, throttled)
 // ========================================================================
 async function detectFace() {
   if (!stream || !faceLoaded) return;
@@ -681,21 +680,15 @@ async function detectFace() {
 }
 
 // ========================================================================
-// 11. RENDER LOOP (sync, 60fps — draws video, overlay, samples rPPG)
+// 11. RENDER LOOP (sync, 60fps)
 // ========================================================================
 function faceLoop() {
   if (!stream) return;
   const srcW = video.videoWidth || 640;
   const srcH = video.videoHeight || 480;
-
-  // Draw video to hidden canvas (cover-mapped)
   hCtx.clearRect(0, 0, 320, 320);
   drawVideoCover(hCtx, video, 320, 320);
-
-  // Clear overlay
   oCtx.clearRect(0, 0, 320, 320);
-
-  // Use cached face or fallback
   let roi = cachedRoi;
   let faceBox = cachedFace;
 
@@ -714,20 +707,17 @@ function faceLoop() {
     oCtx.fillText("Fixed rPPG ROI", roi.x, roi.y - 4);
   }
 
-  // rPPG sampling from hidden canvas
   if (isRec && rppg) {
     const c = rppg.addFrame(roi, hCtx);
     if (!c) finishRec();
     else drawSig();
   }
 
-  // Passport preview (square 120x120) — capture once when face first detected
   if (faceBox && passportPreview.style.display !== "block") {
     try {
       const pCan = document.createElement("canvas");
       pCan.width = 120; pCan.height = 120;
       const pCtx = pCan.getContext("2d");
-      // Crop square from face center
       const sq = Math.min(faceBox.w, faceBox.h);
       const cx = faceBox.x + (faceBox.w - sq) / 2;
       const cy = faceBox.y + (faceBox.h - sq) / 2;
@@ -895,6 +885,7 @@ document.getElementById("reportInput").addEventListener("change", async (e) => {
   if (keys.length > 0) reportSt.innerHTML = '<span class="st-ok">Parsed: ' + keys.map(k => k + "=" + reportData[k]).join(" · ") + "</span>";
   else reportSt.innerHTML = '<span class="st-warn">No parseable vitals. Use keys: BP, Glucose, Temp, Hemoglobin, SpO2.</span>';
 });
+
 
 // ========================================================================
 // 18. EVALUATION ENGINE
