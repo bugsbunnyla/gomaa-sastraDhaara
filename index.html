@@ -578,7 +578,7 @@ async function loadFace() {
   if (faceLoaded) return;
   scanSt.textContent = "Status: Loading face detection models...";
   try {
-    const url = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights";
+    const url = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights";
     await faceapi.nets.tinyFaceDetector.loadFromUri(url);
     await faceapi.nets.faceLandmark68Net.loadFromUri(url);
     faceLoaded = true;
