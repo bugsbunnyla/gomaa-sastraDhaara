@@ -599,8 +599,8 @@ function getCoverTransform(srcW, srcH, dstW, dstH) {
   return { scale, offsetX, offsetY, drawW, drawH };
 }
 function drawVideoCover(ctx, videoEl, dstW, dstH) {
-  const srcW = videoEl.videoWidth || videoEl.width || 640;
-  const srcH = videoEl.videoHeight || videoEl.height || 480;
+  const srcW = videoEl.videoWidth || 640;
+  const srcH = videoEl.videoHeight || 480;
   const t = getCoverTransform(srcW, srcH, dstW, dstH);
   ctx.drawImage(videoEl, t.offsetX, t.offsetY, t.drawW, t.drawH);
 }
@@ -632,10 +632,12 @@ loadFace();
 // 9. CAMERA — START / STOP / RESET
 // ========================================================================
 document.getElementById("btnCam").addEventListener("click", async () => {
+  // STOP CAMERA
   if (stream) {
     if (isRec) { isRec = false; if (rppg) rppg.stop(); rppg = null; }
     stream.getTracks().forEach(t => t.stop());
     stream = null;
+    video.srcObject = null;
     video.style.display = "none";
     place.style.display = "block";
     overlay.style.display = "none";
@@ -649,26 +651,31 @@ document.getElementById("btnCam").addEventListener("click", async () => {
     scanSt.textContent = "Status: Camera stopped.";
     return;
   }
+  // START CAMERA
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, audio: false });
+    scanSt.textContent = "Status: Requesting camera permission...";
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+      audio: false
+    });
     video.srcObject = stream;
     video.style.display = "block";
     imgP.style.display = "none";
     place.style.display = "none";
     overlay.style.display = "block";
-    await new Promise((resolve) => {
-      if (video.videoWidth > 0) resolve();
-      else { video.onloadedmetadata = () => resolve(); }
-    });
-    video.width = 320; video.height = 320;
     overlay.width = 320; overlay.height = 320;
     sigCan.width = 320; sigCan.height = 60;
+    // Ensure video starts playing (some browsers need explicit play())
+    try { await video.play(); } catch (playErr) { /* autoplay may already be running */ }
     document.getElementById("btnCam").textContent = "🛑 Stop Camera";
     document.getElementById("btnRec").disabled = false;
     document.getElementById("btnRec").textContent = "⏺️ Record 10s";
     scanSt.textContent = "Status: Camera active. " + (faceLoaded ? "Face detection running..." : "Using fixed forehead ROI.");
     faceLoop();
-  } catch (e) { alert("Camera error: " + e.message); }
+  } catch (e) {
+    scanSt.innerHTML = '<span class="st-err">Camera error: ' + e.message + "</span>";
+    alert("Camera error: " + e.message);
+  }
 });
 
 // ========================================================================
