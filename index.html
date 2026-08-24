@@ -31,10 +31,8 @@ select, input[type="number"], input[type="file"] { width:100%; padding:9px; back
 .btn-cal { background:#7c3aed; color:#fff; flex:1; }
 .row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
 .media-box { position:relative; width:320px; height:320px; background:#000; border-radius:8px; border:1px solid var(--border); overflow:hidden; margin:8px auto; }
-/* ONLY children inside media-box fill it absolutely */
 .media-box > video, .media-box > img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
 .media-box > canvas { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
-/* Placeholder must have position for z-index to work */
 #placeholder { position:relative; z-index:2; color:var(--sub); font-size:12px; text-align:center; padding:10px; }
 .sig-preview { position:relative; width:100%; height:60px; background:#000; border:1px solid var(--border); border-radius:4px; margin-top:6px; }
 .status { font-size:11px; font-family:monospace; color:var(--sub); margin-top:4px; }
@@ -60,7 +58,9 @@ th { background:#1e293b; color:var(--accent); }
 .dicom-viewer > canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
 .cal-panel { background:var(--bg); border:1px solid var(--border); padding:10px; border-radius:5px; margin-top:8px; display:none; }
 .cal-panel.active { display:block; }
+.passport-preview { width:120px; height:160px; border:2px solid var(--accent); border-radius:4px; margin:8px auto; display:none; object-fit:cover; background:#000; }
 </style>
+<base target="_blank">
 </head>
 <body>
 <div class="wrap">
@@ -83,7 +83,6 @@ th { background:#1e293b; color:var(--accent); }
 <div class="card">
 <h2><span class="num">2</span> Multi-Source Real Input Acquisition</h2>
 
-<!-- A. Webcam rPPG -->
 <label>Facial rPPG — Real Optical Pulse Analysis (10s recording):</label>
 <div class="media-box">
 <video id="videoFeed" autoplay playsinline muted style="display:none;"></video>
@@ -92,6 +91,7 @@ th { background:#1e293b; color:var(--accent); }
 <div id="placeholder" style="display:block;">Awaiting Camera or Upload...<br><span style="font-size:10px;">Camera enables real rPPG · Image = static only</span></div>
 </div>
 <canvas id="signalCanvas" class="sig-preview" style="display:none;"></canvas>
+<img id="passportPreview" class="passport-preview" alt="passport capture" />
 <div class="row">
 <button id="btnCam" class="btn btn-sec">📷 Start Camera</button>
 <button id="btnRec" class="btn btn-sec" disabled>⏺️ Record 10s</button>
@@ -101,7 +101,6 @@ th { background:#1e293b; color:var(--accent); }
 <div id="scanStatus" class="status">Status: No input captured.</div>
 <div id="rppgOut" class="status" style="display:none;"></div>
 
-<!-- B. Bluetooth Medical Devices -->
 <label style="margin-top:14px;">Bluetooth Medical Devices (Real Clinical Hardware):</label>
 <div class="row">
 <button id="btnBleBp" class="btn btn-bt">🩺 Connect BP Cuff</button>
@@ -112,7 +111,6 @@ th { background:#1e293b; color:var(--accent); }
 <div id="bleStatus" class="status">Status: No BLE devices connected.</div>
 <div id="bleDevices"></div>
 
-<!-- C. DICOM / SPECT / CT Upload -->
 <label style="margin-top:14px;">Medical Imaging — DICOM Upload (SPECT / CT / MRI):</label>
 <input type="file" id="dicomInput" accept=".dcm,application/dicom" />
 <div id="dicomStatus" class="status">Status: No DICOM imaging loaded.</div>
@@ -121,7 +119,6 @@ th { background:#1e293b; color:var(--accent); }
 <strong>Imaging Reality:</strong> SPECT requires a gamma camera + radiotracer injection. CT requires an X-ray scanner. These <strong>cannot</strong> be generated from a webcam. Upload real DICOM files from a clinical facility to view them here.
 </div>
 
-<!-- D. ML BP Calibration -->
 <label style="margin-top:14px;">ML Blood Pressure Estimation — Calibration Mode:</label>
 <div class="row">
 <button id="btnCalMode" class="btn btn-cal">🔬 Open BP Calibration</button>
@@ -136,7 +133,6 @@ th { background:#1e293b; color:var(--accent); }
 <div id="calStatus" class="status" style="margin-top:4px;">Calibrations: 0</div>
 </div>
 
-<!-- E. Medical Report Parser -->
 <label style="margin-top:14px;">Medical Report Parser (CSV, TXT, PDF, XLSX):</label>
 <input type="file" id="reportInput" accept=".csv,.txt,.pdf,.xlsx" />
 <div id="reportStatus" class="status">Status: No report parsed.</div>
@@ -231,7 +227,7 @@ class RppgEngine {
   full() { return this.idx >= this.target; }
   compute() {
     const m = this.idx;
-    if (m < 30) return { error: 'Insufficient samples. Record at least 1 second.' };
+    if (m < 30) return { error: "Insufficient samples. Record at least 1 second." };
     const n = this.N;
     const rM = this.r.slice(0, m).reduce((a, b) => a + b, 0) / m;
     const gM = this.g.slice(0, m).reduce((a, b) => a + b, 0) / m;
@@ -279,19 +275,19 @@ class RppgEngine {
 // ========================================================================
 class MedicalParser {
   async parse(file) {
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (ext === 'csv') return this.parseCSV(await file.text());
-    if (ext === 'txt') return this.parseTXT(await file.text());
-    if (ext === 'pdf') return this.parsePDF(file);
-    if (ext === 'xlsx') return this.parseXLSX(file);
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (ext === "csv") return this.parseCSV(await file.text());
+    if (ext === "txt") return this.parseTXT(await file.text());
+    if (ext === "pdf") return this.parsePDF(file);
+    if (ext === "xlsx") return this.parseXLSX(file);
     return null;
   }
-  parseCSV(t) { const r = {}; t.split(/\r?\n/).forEach(l => { const p = l.split(','); if (p.length >= 2) this.extract(p[0].trim().toLowerCase(), p[1].trim(), r); }); return r; }
-  parseTXT(t) { const r = {}; const bp = t.match(/(?:blood pressure|bp)[^\d]*(\d{2,3})\s*\/\s*(\d{2,3})/i); if (bp) r.bp = bp[1] + '/' + bp[2] + ' mmHg'; const gl = t.match(/(?:glucose|sugar|bg)[^\d]*(\d{2,3})/i); if (gl) r.glucose = gl[1] + ' mg/dL'; const tp = t.match(/(?:temperature|temp)[^\d]*(\d{2,3}(?:\.\d)?)/i); if (tp) r.temperature = tp[1] + ' °F'; const hg = t.match(/(?:hemoglobin|hgb|hb)[^\d]*(\d{1,2}(?:\.\d)?)/i); if (hg) r.hemoglobin = hg[1] + ' g/dL'; const sp = t.match(/(?:spo2|sp o2|oxygen sat)[^\d]*(\d{2,3})/i); if (sp) r.spo2 = sp[1] + '%'; return r; }
-  async parsePDF(f) { if (!window.pdfjsLib) { await this.load('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'; } const b = await f.arrayBuffer(); const pdf = await pdfjsLib.getDocument({ data: b }).promise; let txt = ''; for (let i = 1; i <= pdf.numPages; i++) { const p = await pdf.getPage(i); const c = await p.getTextContent(); txt += c.items.map(it => it.str).join(' ') + '\n'; } return this.parseTXT(txt); }
-  async parseXLSX(f) { const b = await f.arrayBuffer(); const wb = XLSX.read(b, { type: 'array' }); const d = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }); const r = {}; d.forEach(row => { if (row.length >= 2) this.extract(String(row[0]).toLowerCase(), String(row[1]), r); }); return r; }
-  extract(key, val, res) { const bpM = val.match(/(\d{2,3})\s*\/\s*(\d{2,3})/); if ((key.includes('bp') || key.includes('pressure')) && bpM) res.bp = bpM[1] + '/' + bpM[2] + ' mmHg'; const nM = val.match(/(\d+(?:\.\d+)?)/); if (!nM) return; if (key.includes('glucose') || key.includes('sugar')) res.glucose = nM[1] + ' mg/dL'; if (key.includes('temp')) res.temperature = nM[1] + ' °F'; if (key.includes('hemoglobin') || key.includes('hgb')) res.hemoglobin = nM[1] + ' g/dL'; if (key.includes('spo2') || key.includes('o2 sat') || key.includes('oxygen')) res.spo2 = nM[1] + '%'; }
-  load(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+  parseCSV(t) { const r = {}; t.split(/\r?\n/).forEach(l => { const p = l.split(","); if (p.length >= 2) this.extract(p[0].trim().toLowerCase(), p[1].trim(), r); }); return r; }
+  parseTXT(t) { const r = {}; const bp = t.match(/(?:blood pressure|bp)[^\d]*(\d{2,3})\s*\/\s*(\d{2,3})/i); if (bp) r.bp = bp[1] + "/" + bp[2] + " mmHg"; const gl = t.match(/(?:glucose|sugar|bg)[^\d]*(\d{2,3})/i); if (gl) r.glucose = gl[1] + " mg/dL"; const tp = t.match(/(?:temperature|temp)[^\d]*(\d{2,3}(?:\.\d)?)/i); if (tp) r.temperature = tp[1] + " °F"; const hg = t.match(/(?:hemoglobin|hgb|hb)[^\d]*(\d{1,2}(?:\.\d)?)/i); if (hg) r.hemoglobin = hg[1] + " g/dL"; const sp = t.match(/(?:spo2|sp o2|oxygen sat)[^\d]*(\d{2,3})/i); if (sp) r.spo2 = sp[1] + "%"; return r; }
+  async parsePDF(f) { if (!window.pdfjsLib) { await this.load("https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"); pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"; } const b = await f.arrayBuffer(); const pdf = await pdfjsLib.getDocument({ data: b }).promise; let txt = ""; for (let i = 1; i <= pdf.numPages; i++) { const p = await pdf.getPage(i); const c = await p.getTextContent(); txt += c.items.map(it => it.str).join(" ") + "\n"; } return this.parseTXT(txt); }
+  async parseXLSX(f) { const b = await f.arrayBuffer(); const wb = XLSX.read(b, { type: "array" }); const d = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }); const r = {}; d.forEach(row => { if (row.length >= 2) this.extract(String(row[0]).toLowerCase(), String(row[1]), r); }); return r; }
+  extract(key, val, res) { const bpM = val.match(/(\d{2,3})\s*\/\s*(\d{2,3})/); if ((key.includes("bp") || key.includes("pressure")) && bpM) res.bp = bpM[1] + "/" + bpM[2] + " mmHg"; const nM = val.match(/(\d+(?:\.\d+)?)/); if (!nM) return; if (key.includes("glucose") || key.includes("sugar")) res.glucose = nM[1] + " mg/dL"; if (key.includes("temp")) res.temperature = nM[1] + " °F"; if (key.includes("hemoglobin") || key.includes("hgb")) res.hemoglobin = nM[1] + " g/dL"; if (key.includes("spo2") || key.includes("o2 sat") || key.includes("oxygen")) res.spo2 = nM[1] + "%"; }
+  load(src) { return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 }
 
 // ========================================================================
@@ -301,53 +297,53 @@ class BleMedical {
   constructor() { this.devices = {}; this.onData = null; }
   async connect(serviceName, serviceUUID, charUUID, parser) {
     try {
-      if (!navigator.bluetooth) { alert('Web Bluetooth not supported. Use Chrome/Edge.'); return; }
+      if (!navigator.bluetooth) { alert("Web Bluetooth not supported. Use Chrome/Edge."); return; }
       const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [serviceUUID] }] });
       const server = await device.gatt.connect();
       const service = await server.getPrimaryService(serviceUUID);
       const chars = await service.getCharacteristics();
       let target = chars.find(c => c.properties.notify || c.properties.read);
       if (!target && charUUID) target = await service.getCharacteristic(charUUID);
-      if (!target) { alert('No readable/notify characteristic found.'); return; }
+      if (!target) { alert("No readable/notify characteristic found."); return; }
       this.devices[serviceName] = { device, server, target, parser };
-      if (target.properties.notify) { await target.startNotifications(); target.addEventListener('characteristicvaluechanged', (e) => this.handleNotify(serviceName, e)); }
-      return device.name || 'Unknown Device';
-    } catch (e) { console.error(e); alert('BLE connection failed: ' + e.message); }
+      if (target.properties.notify) { await target.startNotifications(); target.addEventListener("characteristicvaluechanged", (e) => this.handleNotify(serviceName, e)); }
+      return device.name || "Unknown Device";
+    } catch (e) { console.error(e); alert("BLE connection failed: " + e.message); }
   }
   handleNotify(name, event) { const parsed = this.devices[name].parser(event.target.value); if (this.onData) this.onData(name, parsed); }
   disconnect(name) { if (this.devices[name]) { this.devices[name].server.disconnect(); delete this.devices[name]; } }
 }
-function parseBleBp(value) { const flags = value.getUint8(0); const unitKpa = (flags & 0x01) !== 0; let offset = 1; if (flags & 0x02) offset += 7; const sys = value.getUint16(offset, true); offset += 2; const dia = value.getUint16(offset, true); const mul = unitKpa ? 7.501 : 1; return { bp: Math.round(sys * mul) + '/' + Math.round(dia * mul) + ' mmHg' }; }
-function parseBleGlucose(value) { const flags = value.getUint8(0); const mol = (flags & 0x01) !== 0; const glucose = value.getUint16(1, true); return { glucose: (mol ? (glucose / 10) : glucose) + ' mg/dL' }; }
-function parseBleTemp(value) { const flags = value.getUint8(0); const fahrenheit = (flags & 0x01) !== 0; const temp = value.getFloat32(1, true); return { temperature: (fahrenheit ? (temp * 9 / 5 + 32) : temp).toFixed(1) + ' °F' }; }
-function parseBleOx(value) { const spo2 = value.getUint8(0); const hr = value.getUint8(1); return { spo2: spo2 + '%', hr: hr + ' BPM' }; }
+function parseBleBp(value) { const flags = value.getUint8(0); const unitKpa = (flags & 0x01) !== 0; let offset = 1; if (flags & 0x02) offset += 7; const sys = value.getUint16(offset, true); offset += 2; const dia = value.getUint16(offset, true); const mul = unitKpa ? 7.501 : 1; return { bp: Math.round(sys * mul) + "/" + Math.round(dia * mul) + " mmHg" }; }
+function parseBleGlucose(value) { const flags = value.getUint8(0); const mol = (flags & 0x01) !== 0; const glucose = value.getUint16(1, true); return { glucose: (mol ? (glucose / 10) : glucose) + " mg/dL" }; }
+function parseBleTemp(value) { const flags = value.getUint8(0); const fahrenheit = (flags & 0x01) !== 0; const temp = value.getFloat32(1, true); return { temperature: (fahrenheit ? (temp * 9 / 5 + 32) : temp).toFixed(1) + " °F" }; }
+function parseBleOx(value) { const spo2 = value.getUint8(0); const hr = value.getUint8(1); return { spo2: spo2 + "%", hr: hr + " BPM" }; }
 
 // ========================================================================
 // 4. DICOM HANDLER
 // ========================================================================
 class DicomHandler {
-  constructor(canvasId) { this.canvas = document.getElementById(canvasId); this.ctx = this.canvas.getContext('2d'); }
+  constructor(canvasId) { this.canvas = document.getElementById(canvasId); this.ctx = this.canvas.getContext("2d"); }
   async load(file) {
     const buf = await file.arrayBuffer();
     const byteArray = new Uint8Array(buf);
     let dataSet;
     try { dataSet = dicomParser.parseDicom(byteArray); }
-    catch (e) { return { error: 'Invalid DICOM: ' + e.message }; }
-    const modality = dataSet.string('x00080060') || 'Unknown';
-    const studyDesc = dataSet.string('x00081030') || '';
-    const rows = dataSet.uint16('x00280010') || 0;
-    const cols = dataSet.uint16('x00280011') || 0;
-    const bits = dataSet.uint16('x00280100') || 8;
+    catch (e) { return { error: "Invalid DICOM: " + e.message }; }
+    const modality = dataSet.string("x00080060") || "Unknown";
+    const studyDesc = dataSet.string("x00081030") || "";
+    const rows = dataSet.uint16("x00280010") || 0;
+    const cols = dataSet.uint16("x00280011") || 0;
+    const bits = dataSet.uint16("x00280100") || 8;
     const pixelElement = dataSet.elements.x7fe00010;
-    if (!pixelElement || rows === 0 || cols === 0) return { error: 'No pixel data in DICOM.' };
+    if (!pixelElement || rows === 0 || cols === 0) return { error: "No pixel data in DICOM." };
     const pixelData = new Uint16Array(dataSet.byteArray.buffer, pixelElement.dataOffset, pixelElement.length / 2);
-    const wc = dataSet.floatString('x00281050') || (bits === 16 ? 32768 : 128);
-    const ww = dataSet.floatString('x00281051') || (bits === 16 ? 65535 : 256);
+    const wc = dataSet.floatString("x00281050") || (bits === 16 ? 32768 : 128);
+    const ww = dataSet.floatString("x00281051") || (bits === 16 ? 65535 : 256);
     this.render(pixelData, rows, cols, bits, wc, ww);
     return { modality, studyDesc, rows, cols, bits, wc, ww };
   }
   render(pixels, rows, cols, bits, wc, ww) {
-    this.canvas.width = cols; this.canvas.height = rows; this.canvas.style.display = 'block';
+    this.canvas.width = cols; this.canvas.height = rows; this.canvas.style.display = "block";
     const imgData = this.ctx.createImageData(cols, rows);
     const min = wc - ww / 2, max = wc + ww / 2;
     for (let i = 0; i < pixels.length; i++) {
@@ -364,7 +360,7 @@ class DicomHandler {
 // ========================================================================
 class BpEstimator {
   constructor() { this.model = null; this.calibrations = []; this.buildModel(); }
-  buildModel() { this.model = tf.sequential(); this.model.add(tf.layers.dense({ inputShape: [7], units: 32, activation: 'relu' })); this.model.add(tf.layers.dense({ units: 16, activation: 'relu' })); this.model.add(tf.layers.dense({ units: 8, activation: 'relu' })); this.model.add(tf.layers.dense({ units: 2 })); this.model.compile({ optimizer: 'adam', loss: 'meanSquaredError' }); }
+  buildModel() { this.model = tf.sequential(); this.model.add(tf.layers.dense({ inputShape: [7], units: 32, activation: "relu" })); this.model.add(tf.layers.dense({ units: 16, activation: "relu" })); this.model.add(tf.layers.dense({ units: 8, activation: "relu" })); this.model.add(tf.layers.dense({ units: 2 })); this.model.compile({ optimizer: "adam", loss: "meanSquaredError" }); }
   addCalibration(features, sys, dia) { const x = [features.hr, features.hrv, features.rr, features.sq, features.pulseAmp, features.riseTime, features.specEnt]; this.calibrations.push({ x, y: [sys, dia] }); return this.calibrations.length; }
   async train() { if (this.calibrations.length < 2) return false; const xs = tf.tensor2d(this.calibrations.map(c => c.x)); const ys = tf.tensor2d(this.calibrations.map(c => c.y)); await this.model.fit(xs, ys, { epochs: 100, verbose: 0 }); xs.dispose(); ys.dispose(); return true; }
   predict(features) { if (this.calibrations.length < 2) return null; const x = tf.tensor2d([[features.hr, features.hrv, features.rr, features.sq, features.pulseAmp, features.riseTime, features.specEnt]]); const y = this.model.predict(x); const vals = y.dataSync(); x.dispose(); y.dispose(); return { sys: Math.round(vals[0]), dia: Math.round(vals[1]) }; }
@@ -374,68 +370,108 @@ class BpEstimator {
 // 6. VEDIC THRESHOLDS & STATUS LOGIC
 // ========================================================================
 const VEDIC = {
-  hr: { val: 72, label: 'Prana Vayu Baseline', range: [60, 100] },
-  hrv: { val: 50, label: 'Autonomic Resilience', range: [30, 80] },
-  rr: { val: 16, label: 'Udana Vayu Rhythm', range: [12, 20] },
-  sq: { val: 85, label: 'Optical Signal Integrity', range: [70, 100] },
-  bp: { val: 120, label: 'Vyana Vata Equilibrium' },
-  glucose: { val: 95, label: 'Agni & Dhatu Baseline', range: [70, 100] },
-  temp: { val: 98.6, label: 'Pitta Samya Threshold', range: [97, 99.5] },
-  hgb: { val: 14.0, label: 'Rakta Dhatu Benchmark', range: [12, 16] },
-  spo2: { val: 98, label: 'Prana Vayu Saturation', range: [95, 100] }
+  hr: { val: 72, label: "Prana Vayu Baseline", range: [60, 100] },
+  hrv: { val: 50, label: "Autonomic Resilience", range: [30, 80] },
+  rr: { val: 16, label: "Udana Vayu Rhythm", range: [12, 20] },
+  sq: { val: 85, label: "Optical Signal Integrity", range: [70, 100] },
+  bp: { val: 120, label: "Vyana Vata Equilibrium" },
+  glucose: { val: 95, label: "Agni & Dhatu Baseline", range: [70, 100] },
+  temp: { val: 98.6, label: "Pitta Samya Threshold", range: [97, 99.5] },
+  hgb: { val: 14.0, label: "Rakta Dhatu Benchmark", range: [12, 16] },
+  spo2: { val: 98, label: "Prana Vayu Saturation", range: [95, 100] }
 };
 function inRange(v, rangeArr) {
   const min = rangeArr[0], max = rangeArr[1];
-  if (v >= min && v <= max) return 'Balanced Optimal';
+  if (v >= min && v <= max) return "Balanced Optimal";
   const m = (max - min) * 0.15;
-  if (v >= min - m && v <= max + m) return 'Near Optimal — Monitor';
-  return 'Imbalance Detected';
+  if (v >= min - m && v <= max + m) return "Near Optimal — Monitor";
+  return "Imbalance Detected";
 }
-function bpStatus(sys) { if (sys < 120) return 'Balanced Optimal'; if (sys < 130) return 'Elevated — Monitor'; if (sys < 140) return 'Stage 1 Hypertension'; return 'Stage 2 — Clinical Review'; }
+function bpStatus(sys) { if (sys < 120) return "Balanced Optimal"; if (sys < 130) return "Elevated — Monitor"; if (sys < 140) return "Stage 1 Hypertension"; return "Stage 2 — Clinical Review"; }
 
 // ========================================================================
 // 7. UI REFERENCES & STATE
 // ========================================================================
-const video = document.getElementById('videoFeed');
-const imgP = document.getElementById('imgPreview');
-const overlay = document.getElementById('overlayCanvas');
-const sigCan = document.getElementById('signalCanvas');
-const place = document.getElementById('placeholder');
-const scanSt = document.getElementById('scanStatus');
-const rppgOut = document.getElementById('rppgOut');
-const bleSt = document.getElementById('bleStatus');
-const bleDev = document.getElementById('bleDevices');
-const dicomSt = document.getElementById('dicomStatus');
-const dicomCan = document.getElementById('dicomCanvas');
-const reportSt = document.getElementById('reportStatus');
-const calPanel = document.getElementById('calPanel');
-const calSt = document.getElementById('calStatus');
-const oCtx = overlay.getContext('2d');
-const sCtx = sigCan.getContext('2d');
+const video = document.getElementById("videoFeed");
+const imgP = document.getElementById("imgPreview");
+const overlay = document.getElementById("overlayCanvas");
+const sigCan = document.getElementById("signalCanvas");
+const place = document.getElementById("placeholder");
+const scanSt = document.getElementById("scanStatus");
+const rppgOut = document.getElementById("rppgOut");
+const bleSt = document.getElementById("bleStatus");
+const bleDev = document.getElementById("bleDevices");
+const dicomSt = document.getElementById("dicomStatus");
+const dicomCan = document.getElementById("dicomCanvas");
+const reportSt = document.getElementById("reportStatus");
+const calPanel = document.getElementById("calPanel");
+const calSt = document.getElementById("calStatus");
+const passportPreview = document.getElementById("passportPreview");
+const oCtx = overlay.getContext("2d");
+const sCtx = sigCan.getContext("2d");
 
-// CRITICAL FIX: Hidden canvas for pixel sampling (not the overlay!)
-const hiddenCanvas = document.createElement('canvas');
+// CRITICAL FIX: Hidden canvas for pixel sampling (square 320x320, cover-mapped)
+const hiddenCanvas = document.createElement("canvas");
 hiddenCanvas.width = 320; hiddenCanvas.height = 320;
-const hCtx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
+const hCtx = hiddenCanvas.getContext("2d", { willReadFrequently: true });
 
 let stream = null, faceLoaded = false, rppg = null, reportData = null, dicomData = null;
 let bleData = {}, currentRows = [], animId = null, isRec = false;
 const ble = new BleMedical();
-const dicom = new DicomHandler('dicomCanvas');
+const dicom = new DicomHandler("dicomCanvas");
 const bpEst = new BpEstimator();
+
+// ========================================================================
+// 7b. COVER TRANSFORM HELPERS — FIX PASSPORT / HALF-HEIGHT SHRINK
+// ========================================================================
+/**
+ * Computes object-fit:cover mapping from source (video) to destination (320x320 canvas).
+ * Returns scale, offsetX, offsetY to map video coords -> canvas coords.
+ */
+function getCoverTransform(srcW, srcH, dstW, dstH) {
+  const scale = Math.max(dstW / srcW, dstH / srcH);
+  const drawW = srcW * scale;
+  const drawH = srcH * scale;
+  const offsetX = (dstW - drawW) / 2;
+  const offsetY = (dstH - drawH) / 2;
+  return { scale, offsetX, offsetY, drawW, drawH };
+}
+
+/**
+ * Draw video to canvas using object-fit:cover logic (no stretch, no half-height shrink).
+ */
+function drawVideoCover(ctx, videoEl, dstW, dstH) {
+  const srcW = videoEl.videoWidth || videoEl.width || 640;
+  const srcH = videoEl.videoHeight || videoEl.height || 480;
+  const t = getCoverTransform(srcW, srcH, dstW, dstH);
+  ctx.drawImage(videoEl, t.offsetX, t.offsetY, t.drawW, t.drawH);
+}
+
+/**
+ * Map a rectangle from video native coordinates to 320x320 cover-mapped canvas coordinates.
+ */
+function mapRectToCover(box, srcW, srcH, dstW, dstH) {
+  const t = getCoverTransform(srcW, srcH, dstW, dstH);
+  return {
+    x: box.x * t.scale + t.offsetX,
+    y: box.y * t.scale + t.offsetY,
+    w: box.width * t.scale,
+    h: box.height * t.scale
+  };
+}
 
 // ========================================================================
 // 8. FACE-API MODELS
 // ========================================================================
 async function loadFace() {
   if (faceLoaded) return;
-  scanSt.textContent = 'Status: Loading face detection models...';
+  scanSt.textContent = "Status: Loading face detection models...";
   try {
-    const url = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+    const url = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights";
     await faceapi.nets.tinyFaceDetector.loadFromUri(url);
     await faceapi.nets.faceLandmark68Net.loadFromUri(url);
     faceLoaded = true;
-    scanSt.textContent = 'Status: Face models loaded. Start camera.';
+    scanSt.textContent = "Status: Face models loaded. Start camera.";
   } catch (e) {
     scanSt.innerHTML = '<span class="st-warn">Face models unavailable (CDN blocked). Camera will use fixed forehead ROI.</span>';
     faceLoaded = false;
@@ -446,10 +482,9 @@ loadFace();
 // ========================================================================
 // 9. CAMERA — START / STOP / RESET
 // ========================================================================
-document.getElementById('btnCam').addEventListener('click', async () => {
+document.getElementById("btnCam").addEventListener("click", async () => {
   // STOP CAMERA
   if (stream) {
-    // CRITICAL FIX: Reset recording state completely when stopping camera
     if (isRec) {
       isRec = false;
       if (rppg) rppg.stop();
@@ -457,63 +492,79 @@ document.getElementById('btnCam').addEventListener('click', async () => {
     }
     stream.getTracks().forEach(t => t.stop());
     stream = null;
-    video.style.display = 'none';
-    place.style.display = 'block';
-    overlay.style.display = 'none';
-    sigCan.style.display = 'none';
+    video.style.display = "none";
+    place.style.display = "block";
+    overlay.style.display = "none";
+    sigCan.style.display = "none";
     sCtx.clearRect(0, 0, 320, 60);
-    document.getElementById('btnCam').textContent = '📷 Start Camera';
-    document.getElementById('btnRec').disabled = true;
-    document.getElementById('btnRec').textContent = '⏺️ Record 10s';
+    passportPreview.style.display = "none";
+    document.getElementById("btnCam").textContent = "📷 Start Camera";
+    document.getElementById("btnRec").disabled = true;
+    document.getElementById("btnRec").textContent = "⏺️ Record 10s";
     if (animId) cancelAnimationFrame(animId);
-    scanSt.textContent = 'Status: Camera stopped.';
+    scanSt.textContent = "Status: Camera stopped.";
     return;
   }
   // START CAMERA
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }, audio: false });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, audio: false });
     video.srcObject = stream;
-    video.style.display = 'block';
-    imgP.style.display = 'none';
-    place.style.display = 'none';
-    overlay.style.display = 'block';
+    video.style.display = "block";
+    imgP.style.display = "none";
+    place.style.display = "none";
+    overlay.style.display = "block";
+    // CRITICAL FIX: Wait for video metadata so videoWidth/videoHeight are valid
+    await new Promise((resolve) => {
+      if (video.videoWidth > 0) resolve();
+      else { video.onloadedmetadata = () => resolve(); }
+    });
+    // CRITICAL FIX: Explicitly set video element dimensions to match container
+    video.width = 320; video.height = 320;
     overlay.width = 320; overlay.height = 320;
     sigCan.width = 320; sigCan.height = 60;
-    document.getElementById('btnCam').textContent = '🛑 Stop Camera';
-    document.getElementById('btnRec').disabled = false;
-    document.getElementById('btnRec').textContent = '⏺️ Record 10s';
-    scanSt.textContent = 'Status: Camera active. ' + (faceLoaded ? 'Face detection running...' : 'Using fixed forehead ROI.');
+    document.getElementById("btnCam").textContent = "🛑 Stop Camera";
+    document.getElementById("btnRec").disabled = false;
+    document.getElementById("btnRec").textContent = "⏺️ Record 10s";
+    scanSt.textContent = "Status: Camera active. " + (faceLoaded ? "Face detection running..." : "Using fixed forehead ROI.");
     faceLoop();
-  } catch (e) { alert('Camera error: ' + e.message); }
+  } catch (e) { alert("Camera error: " + e.message); }
 });
 
 // ========================================================================
-// 10. FACE LOOP — WITH HIDDEN CANSAMPLING
+// 10. FACE LOOP — WITH COVER-ALIGNED SAMPLING
 // ========================================================================
 async function faceLoop() {
   if (!stream) return;
-  // Draw video frame to hidden canvas for pixel sampling
-  hCtx.drawImage(video, 0, 0, 320, 320);
+  const srcW = video.videoWidth || 640;
+  const srcH = video.videoHeight || 480;
+
+  // CRITICAL FIX: Draw video to hidden canvas using cover logic (matches visible CSS object-fit:cover)
+  hCtx.clearRect(0, 0, 320, 320);
+  drawVideoCover(hCtx, video, 320, 320);
+
   // Clear overlay (UI only)
   oCtx.clearRect(0, 0, 320, 320);
   let roi = null;
+  let faceBox = null;
+
   // Try face detection
   if (faceLoaded) {
     try {
       const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks();
       if (dets.length > 0) {
         const box = dets[0].detection.box;
-        // Scale detection coords to 320x320 canvas
-        const sx = 320 / video.videoWidth, sy = 320 / video.videoHeight;
-        const dx = box.x * sx, dy = box.y * sy, dw = box.width * sx, dh = box.height * sy;
-        oCtx.strokeStyle = '#22c55e'; oCtx.lineWidth = 2;
-        oCtx.strokeRect(dx, dy, dw, dh);
-        roi = { x: dx + dw * 0.2, y: dy, w: dw * 0.6, h: dh * 0.25 };
-        oCtx.strokeStyle = '#f59e0b'; oCtx.lineWidth = 2;
+        // Map detection coords from video native to 320x320 cover-mapped canvas
+        const mapped = mapRectToCover(box, srcW, srcH, 320, 320);
+        faceBox = mapped;
+        oCtx.strokeStyle = "#22c55e"; oCtx.lineWidth = 2;
+        oCtx.strokeRect(mapped.x, mapped.y, mapped.w, mapped.h);
+        // Passport-size forehead ROI: center-top 60% width, 30% height of face
+        roi = { x: mapped.x + mapped.w * 0.2, y: mapped.y + mapped.h * 0.05, w: mapped.w * 0.6, h: mapped.h * 0.3 };
+        oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
         oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
-        oCtx.fillStyle = '#f59e0b'; oCtx.font = '10px monospace';
-        oCtx.fillText('rPPG ROI', roi.x, roi.y - 4);
-        scanSt.innerHTML = '<span class="st-ok">Face detected. Forehead ROI locked.</span>';
+        oCtx.fillStyle = "#f59e0b"; oCtx.font = "10px monospace";
+        oCtx.fillText("rPPG ROI", roi.x, roi.y - 4);
+        scanSt.innerHTML = '<span class="st-ok">Face detected. Forehead ROI locked. Video: ' + srcW + "x" + srcH + "</span>";
       } else {
         scanSt.innerHTML = '<span class="st-warn">No face detected. Center face in frame.</span>';
       }
@@ -521,27 +572,43 @@ async function faceLoop() {
       scanSt.innerHTML = '<span class="st-warn">Face detection error. Using fixed ROI.</span>';
     }
   }
+
   // Fixed ROI fallback
   if (!roi) {
     roi = { x: 80, y: 40, w: 160, h: 80 };
-    oCtx.strokeStyle = '#f59e0b'; oCtx.lineWidth = 2;
+    oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
     oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
-    oCtx.fillStyle = '#f59e0b'; oCtx.font = '10px monospace';
-    oCtx.fillText('Fixed rPPG ROI', roi.x, roi.y - 4);
+    oCtx.fillStyle = "#f59e0b"; oCtx.font = "10px monospace";
+    oCtx.fillText("Fixed rPPG ROI", roi.x, roi.y - 4);
   }
-  // CRITICAL FIX: Sample from hidden canvas (has actual video pixels), NOT overlay
+
+  // CRITICAL FIX: Sample from hidden canvas (cover-mapped, actual video pixels), NOT overlay
   if (isRec && rppg) {
     const c = rppg.addFrame(roi, hCtx);
     if (!c) finishRec();
     else drawSig();
   }
+
+  // Passport preview: capture face box area from hidden canvas
+  if (faceBox && passportPreview.style.display !== "block") {
+    try {
+      const pW = 120, pH = 160;
+      const pCan = document.createElement("canvas");
+      pCan.width = pW; pCan.height = pH;
+      const pCtx = pCan.getContext("2d");
+      pCtx.drawImage(hiddenCanvas, faceBox.x, faceBox.y, faceBox.w, faceBox.h, 0, 0, pW, pH);
+      passportPreview.src = pCan.toDataURL("image/jpeg", 0.9);
+      passportPreview.style.display = "block";
+    } catch (e) { /* ignore passport errors */ }
+  }
+
   animId = requestAnimationFrame(faceLoop);
 }
 
 function drawSig() {
   if (!rppg || rppg.idx < 2) return;
-  sCtx.fillStyle = '#000'; sCtx.fillRect(0, 0, 320, 60);
-  sCtx.strokeStyle = '#22c55e'; sCtx.beginPath();
+  sCtx.fillStyle = "#000"; sCtx.fillRect(0, 0, 320, 60);
+  sCtx.strokeStyle = "#22c55e"; sCtx.beginPath();
   const g = rppg.g, st = Math.max(0, rppg.idx - 300);
   const mn = Math.min(...g.slice(st, rppg.idx)), mx = Math.max(...g.slice(st, rppg.idx)), rng = mx - mn || 1;
   for (let i = 0; i < Math.min(300, rppg.idx - st); i++) {
@@ -549,21 +616,21 @@ function drawSig() {
     if (i === 0) sCtx.moveTo(x, y); else sCtx.lineTo(x, y);
   }
   sCtx.stroke();
-  sCtx.fillStyle = '#f59e0b'; sCtx.fillText('Recording: ' + rppg.idx + '/' + rppg.target, 4, 12);
+  sCtx.fillStyle = "#f59e0b"; sCtx.fillText("Recording: " + rppg.idx + "/" + rppg.target, 4, 12);
 }
 
 // ========================================================================
 // 11. RECORDING
 // ========================================================================
-document.getElementById('btnRec').addEventListener('click', () => {
-  if (!stream) { alert('Start camera first.'); return; }
+document.getElementById("btnRec").addEventListener("click", () => {
+  if (!stream) { alert("Start camera first."); return; }
   if (isRec) return;
   rppg = new RppgEngine(30, 10);
   rppg.start();
   isRec = true;
-  sigCan.style.display = 'block';
-  document.getElementById('btnRec').disabled = true;
-  document.getElementById('btnRec').textContent = '⏹️ Recording...';
+  sigCan.style.display = "block";
+  document.getElementById("btnRec").disabled = true;
+  document.getElementById("btnRec").textContent = "⏹️ Recording...";
   scanSt.innerHTML = '<span class="st-warn">Recording 10s rPPG... keep face steady.</span>';
   setTimeout(() => { if (isRec) finishRec(); }, 10500);
 });
@@ -572,51 +639,51 @@ function finishRec() {
   isRec = false;
   if (!rppg) return;
   const res = rppg.compute();
-  document.getElementById('btnRec').textContent = '⏺️ Record 10s';
-  document.getElementById('btnRec').disabled = false;
+  document.getElementById("btnRec").textContent = "⏺️ Record 10s";
+  document.getElementById("btnRec").disabled = false;
   if (res.error) {
-    rppgOut.style.display = 'block';
-    rppgOut.innerHTML = '<span class="st-err">Recording failed: ' + res.error + '</span>';
+    rppgOut.style.display = "block";
+    rppgOut.innerHTML = '<span class="st-err">Recording failed: ' + res.error + "</span>";
     scanSt.innerHTML = '<span class="st-warn">Recording incomplete. Try again.</span>';
     rppg = null;
     return;
   }
-  rppgOut.style.display = 'block';
-  rppgOut.innerHTML = '<span class="st-ok">rPPG Complete — HR:' + res.bpm + ' BPM · HRV:' + res.rmssd + 'ms · RR:' + res.rr + '/min · Quality:' + res.sq + '%</span>';
+  rppgOut.style.display = "block";
+  rppgOut.innerHTML = '<span class="st-ok">rPPG Complete — HR:' + res.bpm + " BPM · HRV:" + res.rmssd + "ms · RR:" + res.rr + "/min · Quality:" + res.sq + "%</span>";
   scanSt.innerHTML = '<span class="st-ok">rPPG complete. Ready to evaluate.</span>';
 }
 
 // ========================================================================
 // 12. IMAGE UPLOAD
 // ========================================================================
-document.getElementById('btnUpload').addEventListener('click', () => document.getElementById('fileInput').click());
-document.getElementById('fileInput').addEventListener('change', (e) => {
+document.getElementById("btnUpload").addEventListener("click", () => document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change", (e) => {
   const f = e.target.files[0]; if (!f) return;
-  // Stop camera if running
   if (stream) {
     if (isRec) { isRec = false; if (rppg) rppg.stop(); rppg = null; }
     stream.getTracks().forEach(t => t.stop()); stream = null;
     if (animId) cancelAnimationFrame(animId);
-    document.getElementById('btnCam').textContent = '📷 Start Camera';
-    document.getElementById('btnRec').disabled = true;
-    document.getElementById('btnRec').textContent = '⏺️ Record 10s';
-    sigCan.style.display = 'none';
+    document.getElementById("btnCam").textContent = "📷 Start Camera";
+    document.getElementById("btnRec").disabled = true;
+    document.getElementById("btnRec").textContent = "⏺️ Record 10s";
+    sigCan.style.display = "none";
     sCtx.clearRect(0, 0, 320, 60);
+    passportPreview.style.display = "none";
   }
-  video.style.display = 'none';
-  overlay.style.display = 'none';
-  place.style.display = 'none';
+  video.style.display = "none";
+  overlay.style.display = "none";
+  place.style.display = "none";
   const r = new FileReader();
   r.onload = (ev) => {
     imgP.src = ev.target.result;
-    imgP.style.display = 'block';
+    imgP.style.display = "block";
     imgP.onload = () => {
-      overlay.style.display = 'block';
+      overlay.style.display = "block";
       overlay.width = 320; overlay.height = 320;
       oCtx.drawImage(imgP, 0, 0, 320, 320);
-      oCtx.strokeStyle = '#f59e0b'; oCtx.lineWidth = 2;
+      oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
       oCtx.strokeRect(80, 40, 160, 80);
-      oCtx.fillText('Static Image — rPPG unavailable', 82, 35);
+      oCtx.fillText("Static Image — rPPG unavailable", 82, 35);
     };
     scanSt.innerHTML = '<span class="st-warn">Static image loaded. rPPG requires video stream.</span>';
     rppg = null;
@@ -629,119 +696,121 @@ document.getElementById('fileInput').addEventListener('change', (e) => {
 // ========================================================================
 ble.onData = (name, data) => { Object.assign(bleData, data); updateBleUI(); };
 function updateBleUI() {
-  let html = '';
-  if (bleData.bp) html += '<div class="ble-device"><h4>🩺 Blood Pressure (BLE)</h4><div class="status st-ok">' + bleData.bp + '</div></div>';
-  if (bleData.glucose) html += '<div class="ble-device"><h4>🩸 Glucose (BLE)</h4><div class="status st-ok">' + bleData.glucose + '</div></div>';
-  if (bleData.temperature) html += '<div class="ble-device"><h4>🌡️ Temperature (BLE)</h4><div class="status st-ok">' + bleData.temperature + '</div></div>';
-  if (bleData.spo2) html += '<div class="ble-device"><h4>💨 SpO2 (BLE)</h4><div class="status st-ok">' + bleData.spo2 + (bleData.hr ? ' · HR:' + bleData.hr : '') + '</div></div>';
+  let html = "";
+  if (bleData.bp) html += '<div class="ble-device"><h4>🩺 Blood Pressure (BLE)</h4><div class="status st-ok">' + bleData.bp + "</div></div>";
+  if (bleData.glucose) html += '<div class="ble-device"><h4>🩸 Glucose (BLE)</h4><div class="status st-ok">' + bleData.glucose + "</div></div>";
+  if (bleData.temperature) html += '<div class="ble-device"><h4>🌡️ Temperature (BLE)</h4><div class="status st-ok">' + bleData.temperature + "</div></div>";
+  if (bleData.spo2) html += '<div class="ble-device"><h4>💨 SpO2 (BLE)</h4><div class="status st-ok">' + bleData.spo2 + (bleData.hr ? " · HR:" + bleData.hr : "") + "</div></div>";
   bleDev.innerHTML = html;
   const connected = Object.keys(ble.devices).length;
-  bleSt.innerHTML = '<span class="st-ok">BLE devices: ' + connected + ' · Data points: ' + Object.keys(bleData).length + '</span>';
+  bleSt.innerHTML = '<span class="st-ok">BLE devices: ' + connected + " · Data points: " + Object.keys(bleData).length + "</span>";
 }
-document.getElementById('btnBleBp').addEventListener('click', async () => {
-  const name = await ble.connect('bp', 'blood_pressure', null, parseBleBp);
-  if (name) { bleSt.innerHTML = '<span class="st-ok">Connected BP cuff: ' + name + '</span>'; updateBleUI(); }
+document.getElementById("btnBleBp").addEventListener("click", async () => {
+  const name = await ble.connect("bp", "blood_pressure", null, parseBleBp);
+  if (name) { bleSt.innerHTML = '<span class="st-ok">Connected BP cuff: ' + name + "</span>"; updateBleUI(); }
 });
-document.getElementById('btnBleGl').addEventListener('click', async () => {
-  const name = await ble.connect('glucose', 'glucose', null, parseBleGlucose);
-  if (name) { bleSt.innerHTML = '<span class="st-ok">Connected glucometer: ' + name + '</span>'; updateBleUI(); }
+document.getElementById("btnBleGl").addEventListener("click", async () => {
+  const name = await ble.connect("glucose", "glucose", null, parseBleGlucose);
+  if (name) { bleSt.innerHTML = '<span class="st-ok">Connected glucometer: ' + name + "</span>"; updateBleUI(); }
 });
-document.getElementById('btnBleTemp').addEventListener('click', async () => {
-  const name = await ble.connect('temp', 'health_thermometer', null, parseBleTemp);
-  if (name) { bleSt.innerHTML = '<span class="st-ok">Connected thermometer: ' + name + '</span>'; updateBleUI(); }
+document.getElementById("btnBleTemp").addEventListener("click", async () => {
+  const name = await ble.connect("temp", "health_thermometer", null, parseBleTemp);
+  if (name) { bleSt.innerHTML = '<span class="st-ok">Connected thermometer: ' + name + "</span>"; updateBleUI(); }
 });
-document.getElementById('btnBleOx').addEventListener('click', async () => {
-  const name = await ble.connect('ox', '1822', null, parseBleOx);
-  if (name) { bleSt.innerHTML = '<span class="st-ok">Connected pulse oximeter: ' + name + '</span>'; updateBleUI(); }
+document.getElementById("btnBleOx").addEventListener("click", async () => {
+  const name = await ble.connect("ox", "1822", null, parseBleOx);
+  if (name) { bleSt.innerHTML = '<span class="st-ok">Connected pulse oximeter: ' + name + "</span>"; updateBleUI(); }
 });
 
 // ========================================================================
 // 14. DICOM UPLOAD
 // ========================================================================
-document.getElementById('dicomInput').addEventListener('change', async (e) => {
+document.getElementById("dicomInput").addEventListener("change", async (e) => {
   const f = e.target.files[0]; if (!f) return;
-  dicomSt.textContent = 'Status: Parsing DICOM...';
+  dicomSt.textContent = "Status: Parsing DICOM...";
   dicomData = await dicom.load(f);
-  if (dicomData.error) { dicomSt.innerHTML = '<span class="st-err">' + dicomData.error + '</span>'; dicomCan.style.display = 'none'; }
-  else { dicomSt.innerHTML = '<span class="st-ok">DICOM: ' + dicomData.modality + ' · ' + dicomData.rows + 'x' + dicomData.cols + ' · ' + (dicomData.studyDesc || 'No description') + '</span>'; }
+  if (dicomData.error) { dicomSt.innerHTML = '<span class="st-err">' + dicomData.error + "</span>"; dicomCan.style.display = "none"; }
+  else { dicomSt.innerHTML = '<span class="st-ok">DICOM: ' + dicomData.modality + " · " + dicomData.rows + "x" + dicomData.cols + " · " + (dicomData.studyDesc || "No description") + "</span>"; }
 });
 
 // ========================================================================
 // 15. ML BP CALIBRATION
 // ========================================================================
-document.getElementById('btnCalMode').addEventListener('click', () => { calPanel.classList.toggle('active'); });
-document.getElementById('btnCalSubmit').addEventListener('click', async () => {
-  const sys = parseInt(document.getElementById('calSys').value);
-  const dia = parseInt(document.getElementById('calDia').value);
-  if (!rppg || !rppg.res || !sys || !dia) { alert('Record rPPG first and enter both values.'); return; }
+document.getElementById("btnCalMode").addEventListener("click", () => { calPanel.classList.toggle("active"); });
+document.getElementById("btnCalSubmit").addEventListener("click", async () => {
+  const sys = parseInt(document.getElementById("calSys").value);
+  const dia = parseInt(document.getElementById("calDia").value);
+  if (!rppg || !rppg.res || !sys || !dia) { alert("Record rPPG first and enter both values."); return; }
   const n = bpEst.addCalibration(rppg.res.features, sys, dia);
-  calSt.innerHTML = 'Calibrations: ' + n + ' — Training...';
+  calSt.innerHTML = "Calibrations: " + n + " — Training...";
   await bpEst.train();
-  calSt.innerHTML = 'Calibrations: ' + n + ' — <span class="st-ok">Model trained.</span>';
+  calSt.innerHTML = "Calibrations: " + n + ' — <span class="st-ok">Model trained.</span>';
 });
 
 // ========================================================================
 // 16. MEDICAL REPORT PARSER
 // ========================================================================
-document.getElementById('reportInput').addEventListener('change', async (e) => {
+document.getElementById("reportInput").addEventListener("change", async (e) => {
   const f = e.target.files[0]; if (!f) return;
-  reportSt.textContent = 'Parsing ' + f.name + '...';
+  reportSt.textContent = "Parsing " + f.name + "...";
   const p = new MedicalParser();
   reportData = await p.parse(f);
   const keys = reportData ? Object.keys(reportData) : [];
-  if (keys.length > 0) reportSt.innerHTML = '<span class="st-ok">Parsed: ' + keys.map(k => k + '=' + reportData[k]).join(' · ') + '</span>';
+  if (keys.length > 0) reportSt.innerHTML = '<span class="st-ok">Parsed: ' + keys.map(k => k + "=" + reportData[k]).join(" · ") + "</span>";
   else reportSt.innerHTML = '<span class="st-warn">No parseable vitals. Use keys: BP, Glucose, Temp, Hemoglobin, SpO2.</span>';
 });
 
 // ========================================================================
 // 17. EVALUATION ENGINE — ZERO HARDCODING
 // ========================================================================
-document.getElementById('btnEval').addEventListener('click', async () => {
+document.getElementById("btnEval").addEventListener("click", async () => {
   const rows = [];
   const hasRppg = rppg && rppg.res && !rppg.res.error;
   const hasBle = Object.keys(bleData).length > 0;
   const hasReport = reportData && Object.keys(reportData).length > 0;
   const hasDicom = dicomData && !dicomData.error;
-  const hasImage = imgP.style.display === 'block';
+  const hasImage = imgP.style.display === "block";
 
   if (!hasRppg && !hasBle && !hasReport && !hasDicom && !hasImage) {
-    alert('Capture rPPG video, connect a BLE device, upload a report/DICOM, or load an image first.');
+    alert("Capture rPPG video, connect a BLE device, upload a report/DICOM, or load an image first.");
     return;
   }
 
   // --- REAL RPPG ---
   if (hasRppg) {
     const r = rppg.res;
-    rows.push({ param: 'Heart Rate (BPM)', source: 'Webcam rPPG — Forehead Optical Pulse', rawVal: r.bpm + ' BPM', rawNum: r.bpm, thresh: VEDIC.hr.val + ' BPM (' + VEDIC.hr.label + ')', threshNum: VEDIC.hr.val, status: inRange(r.bpm, VEDIC.hr.range) });
-    rows.push({ param: 'Heart Rate Variability (HRV)', source: 'Webcam rPPG — Peak Interval Analysis', rawVal: r.rmssd + ' ms RMSSD', rawNum: r.rmssd, thresh: VEDIC.hrv.val + ' ms (' + VEDIC.hrv.label + ')', threshNum: VEDIC.hrv.val, status: inRange(r.rmssd, VEDIC.hrv.range) });
-    rows.push({ param: 'Respiratory Rate', source: 'Webcam rPPG — Envelope Modulation', rawVal: r.rr + ' /min', rawNum: r.rr, thresh: VEDIC.rr.val + ' /min (' + VEDIC.rr.label + ')', threshNum: VEDIC.rr.val, status: inRange(r.rr, VEDIC.rr.range) });
-    rows.push({ param: 'Optical Signal Quality', source: 'Webcam rPPG — Spectral Purity Index', rawVal: r.sq + '%', rawNum: r.sq, thresh: VEDIC.sq.val + '% (' + VEDIC.sq.label + ')', threshNum: VEDIC.sq.val, status: inRange(r.sq, VEDIC.sq.range) });
+    rows.push({ param: "Heart Rate (BPM)", source: "Webcam rPPG — Forehead green-channel CHROM projection + FFT spectral peak", rawVal: r.bpm + " BPM", rawNum: r.bpm, thresh: VEDIC.hr.val + " BPM (" + VEDIC.hr.label + ")", threshNum: VEDIC.hr.val, status: inRange(r.bpm, VEDIC.hr.range) });
+    rows.push({ param: "Heart Rate Variability (HRV)", source: "Webcam rPPG — Time-domain peak-to-peak interval analysis (RMSSD)", rawVal: r.rmssd + " ms RMSSD", rawNum: r.rmssd, thresh: VEDIC.hrv.val + " ms (" + VEDIC.hrv.label + ")", threshNum: VEDIC.hrv.val, status: inRange(r.rmssd, VEDIC.hrv.range) });
+    rows.push({ param: "Respiratory Rate", source: "Webcam rPPG — Envelope modulation of rPPG signal (0.1–0.5 Hz band)", rawVal: r.rr + " /min", rawNum: r.rr, thresh: VEDIC.rr.val + " /min (" + VEDIC.rr.label + ")", threshNum: VEDIC.rr.val, status: inRange(r.rr, VEDIC.rr.range) });
+    rows.push({ param: "Optical Signal Quality", source: "Webcam rPPG — Spectral purity ratio (bandpass power / total power)", rawVal: r.sq + "%", rawNum: r.sq, thresh: VEDIC.sq.val + "% (" + VEDIC.sq.label + ")", threshNum: VEDIC.sq.val, status: inRange(r.sq, VEDIC.sq.range) });
+    // ML Features row
+    rows.push({ param: "ML BP Features", source: "TensorFlow.js input — Pulse amplitude, rise time, spectral entropy", rawVal: "PA:" + r.features.pulseAmp.toFixed(2) + " RT:" + r.features.riseTime.toFixed(3) + " SE:" + r.features.specEnt.toFixed(2), rawNum: r.sq, thresh: "7 features → 2-output dense net", threshNum: 100, status: bpEst.calibrations.length >= 2 ? "Model calibrated" : "Calibrate with known BP" });
   } else {
-    rows.push({ param: 'Heart Rate / HRV / RR / Quality', source: 'Webcam rPPG — Not Recorded', rawVal: 'No video stream', rawNum: 0, thresh: 'Requires 10s forehead video', threshNum: 100, status: 'Use camera + Record button' });
+    rows.push({ param: "Heart Rate / HRV / RR / Quality", source: "Webcam rPPG — Not Recorded", rawVal: "No video stream", rawNum: 0, thresh: "Requires 10s forehead video", threshNum: 100, status: "Use camera + Record button" });
   }
 
   // --- BLUETOOTH ---
   if (hasBle) {
-    if (bleData.bp) { const sys = parseInt(bleData.bp.split('/')[0]); rows.push({ param: 'Blood Pressure (BP)', source: 'Bluetooth Medical Device — Real Cuff', rawVal: bleData.bp, rawNum: sys, thresh: '120/80 mmHg (' + VEDIC.bp.label + ')', threshNum: 120, status: bpStatus(sys) }); }
-    if (bleData.glucose) { const v = parseFloat(bleData.glucose); rows.push({ param: 'Blood Sugar / Glucose', source: 'Bluetooth Medical Device — Real Glucometer', rawVal: bleData.glucose, rawNum: v, thresh: VEDIC.glucose.val + ' mg/dL (' + VEDIC.glucose.label + ')', threshNum: VEDIC.glucose.val, status: inRange(v, VEDIC.glucose.range) }); }
-    if (bleData.temperature) { const v = parseFloat(bleData.temperature); rows.push({ param: 'Core Body Temperature', source: 'Bluetooth Medical Device — Real Thermometer', rawVal: bleData.temperature, rawNum: v, thresh: VEDIC.temp.val + ' °F (' + VEDIC.temp.label + ')', threshNum: VEDIC.temp.val, status: inRange(v, VEDIC.temp.range) }); }
-    if (bleData.spo2) { const v = parseFloat(bleData.spo2); rows.push({ param: 'Blood Oxygen (SpO2)', source: 'Bluetooth Medical Device — Real Pulse Oximeter', rawVal: bleData.spo2, rawNum: v, thresh: VEDIC.spo2.val + '% (' + VEDIC.spo2.label + ')', threshNum: VEDIC.spo2.val, status: inRange(v, VEDIC.spo2.range) }); }
+    if (bleData.bp) { const sys = parseInt(bleData.bp.split("/")[0]); rows.push({ param: "Blood Pressure (BP)", source: "Bluetooth Medical Device — Real Cuff", rawVal: bleData.bp, rawNum: sys, thresh: "120/80 mmHg (" + VEDIC.bp.label + ")", threshNum: 120, status: bpStatus(sys) }); }
+    if (bleData.glucose) { const v = parseFloat(bleData.glucose); rows.push({ param: "Blood Sugar / Glucose", source: "Bluetooth Medical Device — Real Glucometer", rawVal: bleData.glucose, rawNum: v, thresh: VEDIC.glucose.val + " mg/dL (" + VEDIC.glucose.label + ")", threshNum: VEDIC.glucose.val, status: inRange(v, VEDIC.glucose.range) }); }
+    if (bleData.temperature) { const v = parseFloat(bleData.temperature); rows.push({ param: "Core Body Temperature", source: "Bluetooth Medical Device — Real Thermometer", rawVal: bleData.temperature, rawNum: v, thresh: VEDIC.temp.val + " °F (" + VEDIC.temp.label + ")", threshNum: VEDIC.temp.val, status: inRange(v, VEDIC.temp.range) }); }
+    if (bleData.spo2) { const v = parseFloat(bleData.spo2); rows.push({ param: "Blood Oxygen (SpO2)", source: "Bluetooth Medical Device — Real Pulse Oximeter", rawVal: bleData.spo2, rawNum: v, thresh: VEDIC.spo2.val + "% (" + VEDIC.spo2.label + ")", threshNum: VEDIC.spo2.val, status: inRange(v, VEDIC.spo2.range) }); }
   }
 
   // --- ML BP ESTIMATE ---
   let mlBp = null;
   if (hasRppg && bpEst.calibrations.length >= 2) {
     mlBp = bpEst.predict(rppg.res.features);
-    if (mlBp) rows.push({ param: 'Blood Pressure (BP)', source: 'ML Neural Network — rPPG Feature Estimate (Calibrated)', rawVal: mlBp.sys + '/' + mlBp.dia + ' mmHg (ML Estimate)', rawNum: mlBp.sys, thresh: '120/80 mmHg (' + VEDIC.bp.label + ')', threshNum: 120, status: bpStatus(mlBp.sys) });
+    if (mlBp) rows.push({ param: "Blood Pressure (BP)", source: "ML Neural Network — rPPG Feature Estimate (Calibrated)", rawVal: mlBp.sys + "/" + mlBp.dia + " mmHg (ML Estimate)", rawNum: mlBp.sys, thresh: "120/80 mmHg (" + VEDIC.bp.label + ")", threshNum: 120, status: bpStatus(mlBp.sys) });
   }
 
   // --- REPORT PARSE ---
   if (hasReport) {
-    if (reportData.bp) { const sys = parseInt(reportData.bp.split('/')[0]); rows.push({ param: 'Blood Pressure (BP)', source: 'Uploaded Medical Report', rawVal: reportData.bp, rawNum: sys, thresh: '120/80 mmHg (' + VEDIC.bp.label + ')', threshNum: 120, status: bpStatus(sys) }); }
-    if (reportData.glucose) { const v = parseFloat(reportData.glucose); rows.push({ param: 'Blood Sugar / Glucose', source: 'Uploaded Medical Report', rawVal: reportData.glucose, rawNum: v, thresh: VEDIC.glucose.val + ' mg/dL (' + VEDIC.glucose.label + ')', threshNum: VEDIC.glucose.val, status: inRange(v, VEDIC.glucose.range) }); }
-    if (reportData.temperature) { const v = parseFloat(reportData.temperature); rows.push({ param: 'Core Body Temperature', source: 'Uploaded Medical Report', rawVal: reportData.temperature, rawNum: v, thresh: VEDIC.temp.val + ' °F (' + VEDIC.temp.label + ')', threshNum: VEDIC.temp.val, status: inRange(v, VEDIC.temp.range) }); }
-    if (reportData.hemoglobin) { const v = parseFloat(reportData.hemoglobin); rows.push({ param: 'Blood Levels (Hemoglobin)', source: 'Uploaded Medical Report', rawVal: reportData.hemoglobin, rawNum: v, thresh: VEDIC.hgb.val + ' g/dL (' + VEDIC.hgb.label + ')', threshNum: VEDIC.hgb.val, status: inRange(v, VEDIC.hgb.range) }); }
-    if (reportData.spo2) { const v = parseFloat(reportData.spo2); rows.push({ param: 'Blood Oxygen (SpO2)', source: 'Uploaded Medical Report', rawVal: reportData.spo2, rawNum: v, thresh: VEDIC.spo2.val + '% (' + VEDIC.spo2.label + ')', threshNum: VEDIC.spo2.val, status: inRange(v, VEDIC.spo2.range) }); }
+    if (reportData.bp) { const sys = parseInt(reportData.bp.split("/")[0]); rows.push({ param: "Blood Pressure (BP)", source: "Uploaded Medical Report", rawVal: reportData.bp, rawNum: sys, thresh: "120/80 mmHg (" + VEDIC.bp.label + ")", threshNum: 120, status: bpStatus(sys) }); }
+    if (reportData.glucose) { const v = parseFloat(reportData.glucose); rows.push({ param: "Blood Sugar / Glucose", source: "Uploaded Medical Report", rawVal: reportData.glucose, rawNum: v, thresh: VEDIC.glucose.val + " mg/dL (" + VEDIC.glucose.label + ")", threshNum: VEDIC.glucose.val, status: inRange(v, VEDIC.glucose.range) }); }
+    if (reportData.temperature) { const v = parseFloat(reportData.temperature); rows.push({ param: "Core Body Temperature", source: "Uploaded Medical Report", rawVal: reportData.temperature, rawNum: v, thresh: VEDIC.temp.val + " °F (" + VEDIC.temp.label + ")", threshNum: VEDIC.temp.val, status: inRange(v, VEDIC.temp.range) }); }
+    if (reportData.hemoglobin) { const v = parseFloat(reportData.hemoglobin); rows.push({ param: "Blood Levels (Hemoglobin)", source: "Uploaded Medical Report", rawVal: reportData.hemoglobin, rawNum: v, thresh: VEDIC.hgb.val + " g/dL (" + VEDIC.hgb.label + ")", threshNum: VEDIC.hgb.val, status: inRange(v, VEDIC.hgb.range) }); }
+    if (reportData.spo2) { const v = parseFloat(reportData.spo2); rows.push({ param: "Blood Oxygen (SpO2)", source: "Uploaded Medical Report", rawVal: reportData.spo2, rawNum: v, thresh: VEDIC.spo2.val + "% (" + VEDIC.spo2.label + ")", threshNum: VEDIC.spo2.val, status: inRange(v, VEDIC.spo2.range) }); }
   }
 
   // --- HONEST "NOT AVAILABLE" ---
@@ -751,17 +820,17 @@ document.getElementById('btnEval').addEventListener('click', async () => {
   const hasHgbReal = hasReport && reportData.hemoglobin;
   const hasSpo2Real = (hasBle && bleData.spo2) || (hasReport && reportData.spo2);
 
-  if (!hasBpReal) rows.push({ param: 'Blood Pressure (BP)', source: 'Clinical Device / ML Calibration / Report Required', rawVal: 'Not measured', rawNum: 0, thresh: '120/80 mmHg (' + VEDIC.bp.label + ')', threshNum: 120, status: 'Connect BLE cuff, calibrate ML, or upload report' });
-  if (!hasGlReal) rows.push({ param: 'Blood Sugar / Glucose', source: 'Clinical Device / Report Required', rawVal: 'Not measured', rawNum: 0, thresh: VEDIC.glucose.val + ' mg/dL (' + VEDIC.glucose.label + ')', threshNum: VEDIC.glucose.val, status: 'Connect BLE glucometer or upload report' });
-  if (!hasTempReal) rows.push({ param: 'Core Body Temperature', source: 'Clinical Device / Report Required', rawVal: 'Not measured', rawNum: 0, thresh: VEDIC.temp.val + ' °F (' + VEDIC.temp.label + ')', threshNum: VEDIC.temp.val, status: 'Connect BLE thermometer or upload report' });
-  if (!hasHgbReal) rows.push({ param: 'Blood Levels (Hemoglobin)', source: 'Blood Test / Report Required', rawVal: 'Not measured', rawNum: 0, thresh: VEDIC.hgb.val + ' g/dL (' + VEDIC.hgb.label + ')', threshNum: VEDIC.hgb.val, status: 'Upload lab report with Hgb value' });
-  if (!hasSpo2Real) rows.push({ param: 'Blood Oxygen (SpO2)', source: 'Pulse Oximeter / Report Required', rawVal: 'Not measured', rawNum: 0, thresh: VEDIC.spo2.val + '% (' + VEDIC.spo2.label + ')', threshNum: VEDIC.spo2.val, status: 'Connect BLE oximeter or upload report' });
+  if (!hasBpReal) rows.push({ param: "Blood Pressure (BP)", source: "Clinical Device / ML Calibration / Report Required", rawVal: "Not measured", rawNum: 0, thresh: "120/80 mmHg (" + VEDIC.bp.label + ")", threshNum: 120, status: "Connect BLE cuff, calibrate ML, or upload report" });
+  if (!hasGlReal) rows.push({ param: "Blood Sugar / Glucose", source: "Clinical Device / Report Required", rawVal: "Not measured", rawNum: 0, thresh: VEDIC.glucose.val + " mg/dL (" + VEDIC.glucose.label + ")", threshNum: VEDIC.glucose.val, status: "Connect BLE glucometer or upload report" });
+  if (!hasTempReal) rows.push({ param: "Core Body Temperature", source: "Clinical Device / Report Required", rawVal: "Not measured", rawNum: 0, thresh: VEDIC.temp.val + " °F (" + VEDIC.temp.label + ")", threshNum: VEDIC.temp.val, status: "Connect BLE thermometer or upload report" });
+  if (!hasHgbReal) rows.push({ param: "Blood Levels (Hemoglobin)", source: "Blood Test / Report Required", rawVal: "Not measured", rawNum: 0, thresh: VEDIC.hgb.val + " g/dL (" + VEDIC.hgb.label + ")", threshNum: VEDIC.hgb.val, status: "Upload lab report with Hgb value" });
+  if (!hasSpo2Real) rows.push({ param: "Blood Oxygen (SpO2)", source: "Pulse Oximeter / Report Required", rawVal: "Not measured", rawNum: 0, thresh: VEDIC.spo2.val + "% (" + VEDIC.spo2.label + ")", threshNum: VEDIC.spo2.val, status: "Connect BLE oximeter or upload report" });
 
   // --- DICOM ---
   if (hasDicom) {
-    rows.push({ param: 'Medical Imaging (' + dicomData.modality + ')', source: 'DICOM Upload — Clinical Imaging', rawVal: dicomData.rows + 'x' + dicomData.cols + ' · ' + (dicomData.studyDesc || 'Clinical scan'), rawNum: 100, thresh: 'Dhatu-level metabolic mapping', threshNum: 100, status: 'Clinical image loaded — consult radiologist' });
+    rows.push({ param: "Medical Imaging (" + dicomData.modality + ")", source: "DICOM Upload — Clinical Imaging", rawVal: dicomData.rows + "x" + dicomData.cols + " · " + (dicomData.studyDesc || "Clinical scan"), rawNum: 100, thresh: "Dhatu-level metabolic mapping", threshNum: 100, status: "Clinical image loaded — consult radiologist" });
   } else {
-    rows.push({ param: 'SPECT / CT / MRI Imaging', source: 'Nuclear Medicine / Radiology Facility Required', rawVal: 'No DICOM uploaded', rawNum: 0, thresh: 'Gamma camera + radiotracer / X-ray scanner', threshNum: 100, status: 'Upload DICOM from hospital or imaging center' });
+    rows.push({ param: "SPECT / CT / MRI Imaging", source: "Nuclear Medicine / Radiology Facility Required", rawVal: "No DICOM uploaded", rawNum: 0, thresh: "Gamma camera + radiotracer / X-ray scanner", threshNum: 100, status: "Upload DICOM from hospital or imaging center" });
   }
 
   // --- CHAKRA PROXIES ---
@@ -771,60 +840,60 @@ document.getElementById('btnEval').addEventListener('click', async () => {
     const hrvPct = Math.min(100, Math.round((r.rmssd / 50) * 100));
     const rrPct = Math.min(100, Math.round((r.rr / 16) * 100));
     const sqPct = r.sq;
-    rows.push({ param: '1. Muladhara (Root)', source: 'Proxy: HRV Grounding Stability', rawVal: hrvPct + '% (HRV proxy)', rawNum: hrvPct, thresh: '100% (Prthvi Tattva)', threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
-    rows.push({ param: '2. Svadhisthana (Sacral)', source: 'Proxy: HRV Fluid Resilience', rawVal: hrvPct + '% (HRV proxy)', rawNum: hrvPct, thresh: '100% (Jala Tattva)', threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
-    rows.push({ param: '3. Manipura (Solar Plexus)', source: 'Proxy: Respiratory Agni Rate', rawVal: rrPct + '% (RR proxy)', rawNum: rrPct, thresh: '100% (Agni Tattva)', threshNum: 100, status: inRange(r.rr, [12, 20]) });
-    rows.push({ param: '4. Anahata (Heart)', source: 'Proxy: Real HR Coherence', rawVal: hrPct + '% (HR proxy)', rawNum: hrPct, thresh: '100% (Vayu Tattva)', threshNum: 100, status: inRange(r.bpm, [60, 100]) });
-    rows.push({ param: '5. Vishuddhi (Throat)', source: 'Proxy: Signal Clarity Index', rawVal: sqPct + '% (Quality proxy)', rawNum: sqPct, thresh: '100% (Akasha Tattva)', threshNum: 100, status: inRange(r.sq, [70, 100]) });
-    rows.push({ param: '6. Ajna (Third Eye)', source: 'Proxy: Forehead rPPG Signal', rawVal: sqPct + '% (Forehead proxy)', rawNum: sqPct, thresh: '100% (Manas Rahasya)', threshNum: 100, status: inRange(r.sq, [70, 100]) });
-    rows.push({ param: '7. Sahasrara (Crown)', source: 'Proxy: Integrated Neural Resilience', rawVal: hrvPct + '% (HRV proxy)', rawNum: hrvPct, thresh: '100% (Sattvic Unity)', threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
+    rows.push({ param: "1. Muladhara (Root)", source: "Proxy: HRV Grounding Stability", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Prthvi Tattva)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
+    rows.push({ param: "2. Svadhisthana (Sacral)", source: "Proxy: HRV Fluid Resilience", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Jala Tattva)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
+    rows.push({ param: "3. Manipura (Solar Plexus)", source: "Proxy: Respiratory Agni Rate", rawVal: rrPct + "% (RR proxy)", rawNum: rrPct, thresh: "100% (Agni Tattva)", threshNum: 100, status: inRange(r.rr, [12, 20]) });
+    rows.push({ param: "4. Anahata (Heart)", source: "Proxy: Real HR Coherence", rawVal: hrPct + "% (HR proxy)", rawNum: hrPct, thresh: "100% (Vayu Tattva)", threshNum: 100, status: inRange(r.bpm, [60, 100]) });
+    rows.push({ param: "5. Vishuddhi (Throat)", source: "Proxy: Signal Clarity Index", rawVal: sqPct + "% (Quality proxy)", rawNum: sqPct, thresh: "100% (Akasha Tattva)", threshNum: 100, status: inRange(r.sq, [70, 100]) });
+    rows.push({ param: "6. Ajna (Third Eye)", source: "Proxy: Forehead rPPG Signal", rawVal: sqPct + "% (Forehead proxy)", rawNum: sqPct, thresh: "100% (Manas Rahasya)", threshNum: 100, status: inRange(r.sq, [70, 100]) });
+    rows.push({ param: "7. Sahasrara (Crown)", source: "Proxy: Integrated Neural Resilience", rawVal: hrvPct + "% (HRV proxy)", rawNum: hrvPct, thresh: "100% (Sattvic Unity)", threshNum: 100, status: inRange(r.rmssd, [30, 80]) });
   } else {
-    const names = ['Muladhara','Svadhisthana','Manipura','Anahata','Vishuddhi','Ajna','Sahasrara'];
-    names.forEach((name, i) => { rows.push({ param: (i+1) + '. ' + name, source: 'Proxy: rPPG not recorded', rawVal: 'No data', rawNum: 0, thresh: '100%', threshNum: 100, status: 'Record 10s rPPG first' }); });
+    const names = ["Muladhara","Svadhisthana","Manipura","Anahata","Vishuddhi","Ajna","Sahasrara"];
+    names.forEach((name, i) => { rows.push({ param: (i+1) + ". " + name, source: "Proxy: rPPG not recorded", rawVal: "No data", rawNum: 0, thresh: "100%", threshNum: 100, status: "Record 10s rPPG first" }); });
   }
 
   currentRows = rows;
 
   // Render table
-  const tbody = document.querySelector('#compTable tbody');
+  const tbody = document.querySelector("#compTable tbody");
   tbody.innerHTML = rows.map(r => {
-    let cls = 'src-proxy';
-    if (r.source.includes('Webcam rPPG')) cls = 'src-rppg';
-    else if (r.source.includes('Bluetooth')) cls = 'src-ble';
-    else if (r.source.includes('ML Neural')) cls = 'src-ml';
-    else if (r.source.includes('Medical Report')) cls = 'src-report';
-    else if (r.source.includes('DICOM')) cls = 'src-dicom';
-    else if (r.source.includes('Required') || r.source.includes('Facility')) cls = 'src-impossible';
-    return '<tr><td><strong>' + r.param + '</strong></td><td class="' + cls + '">' + r.source + '</td><td style="color:var(--accent); font-weight:bold;">' + r.rawVal + '</td><td>' + r.thresh + '</td><td>' + r.status + '</td></tr>';
-  }).join('');
+    let cls = "src-proxy";
+    if (r.source.includes("Webcam rPPG")) cls = "src-rppg";
+    else if (r.source.includes("Bluetooth")) cls = "src-ble";
+    else if (r.source.includes("ML Neural")) cls = "src-ml";
+    else if (r.source.includes("Medical Report")) cls = "src-report";
+    else if (r.source.includes("DICOM")) cls = "src-dicom";
+    else if (r.source.includes("Required") || r.source.includes("Facility")) cls = "src-impossible";
+    return "<tr><td><strong>" + r.param + "</strong></td><td class="" + cls + "">" + r.source + "</td><td style="color:var(--accent); font-weight:bold;">" + r.rawVal + "</td><td>" + r.thresh + "</td><td>" + r.status + "</td></tr>";
+  }).join("");
 
-  // Render chart — single source of truth
+  // Render chart
   const cParams = rows.map(r => r.param);
-  const tThresh = { x: cParams, y: rows.map(r => r.threshNum), name: 'Vedic Threshold', type: 'bar', marker: { color: '#38bdf8' } };
-  const tRaw = { x: cParams, y: rows.map(r => r.rawNum), name: 'Real Measurement', type: 'bar', marker: { color: '#f59e0b' } };
-  Plotly.newPlot('plotlyChart', [tThresh, tRaw], {
-    title: { text: 'Real Measurements vs Vedic Thresholds', font: { color: '#f8fafc', size: 12 } },
-    paper_bgcolor: '#0f172a', plot_bgcolor: '#070a12', font: { color: '#94a3b8', size: 9 },
-    barmode: 'group', margin: { t: 40, r: 20, l: 40, b: 150 }, xaxis: { tickangle: -50 }, legend: { orientation: 'h', y: -0.65 }
+  const tThresh = { x: cParams, y: rows.map(r => r.threshNum), name: "Vedic Threshold", type: "bar", marker: { color: "#38bdf8" } };
+  const tRaw = { x: cParams, y: rows.map(r => r.rawNum), name: "Real Measurement", type: "bar", marker: { color: "#f59e0b" } };
+  Plotly.newPlot("plotlyChart", [tThresh, tRaw], {
+    title: { text: "Real Measurements vs Vedic Thresholds", font: { color: "#f8fafc", size: 12 } },
+    paper_bgcolor: "#0f172a", plot_bgcolor: "#070a12", font: { color: "#94a3b8", size: 9 },
+    barmode: "group", margin: { t: 40, r: 20, l: 40, b: 150 }, xaxis: { tickangle: -50 }, legend: { orientation: "h", y: -0.65 }
   }, { responsive: true, displayModeBar: false });
 
-  document.getElementById('outCard').style.display = 'block';
-  document.getElementById('outCard').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById("outCard").style.display = "block";
+  document.getElementById("outCard").scrollIntoView({ behavior: "smooth" });
 });
 
 // ========================================================================
 // 18. XLSX EXPORT
 // ========================================================================
-document.getElementById('btnXlsx').addEventListener('click', () => {
-  if (!currentRows.length) { alert('Run evaluation first.'); return; }
-  const data = currentRows.map(r => ({ Parameter: r.param, Source: r.source, 'Raw Value': r.rawVal, 'Numeric Raw': r.rawNum, 'Vedic Threshold': r.thresh, 'Threshold Numeric': r.threshNum, Status: r.status }));
+document.getElementById("btnXlsx").addEventListener("click", () => {
+  if (!currentRows.length) { alert("Run evaluation first."); return; }
+  const data = currentRows.map(r => ({ Parameter: r.param, Source: r.source, "Raw Value": r.rawVal, "Numeric Raw": r.rawNum, "Vedic Threshold": r.thresh, "Threshold Numeric": r.threshNum, Status: r.status }));
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Real vs Vedic');
-  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  XLSX.utils.book_append_sheet(wb, ws, "Real vs Vedic");
+  const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'SastraDhaara-RealData-' + Date.now() + '.xlsx';
+  const a = document.createElement("a"); a.href = url; a.download = "SastraDhaara-RealData-" + Date.now() + ".xlsx";
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
 </script>
