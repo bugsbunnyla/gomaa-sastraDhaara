@@ -58,7 +58,7 @@ th { background:#1e293b; color:var(--accent); }
 .dicom-viewer > canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
 .cal-panel { background:var(--bg); border:1px solid var(--border); padding:10px; border-radius:5px; margin-top:8px; display:none; }
 .cal-panel.active { display:block; }
-.passport-preview { width:120px; height:160px; border:2px solid var(--accent); border-radius:4px; margin:8px auto; display:none; object-fit:cover; background:#000; }
+.passport-preview { width:120px; height:120px; border:2px solid var(--accent); border-radius:4px; margin:8px auto; display:none; object-fit:cover; background:#000; }
 </style>
 <base target="_blank">
 </head>
@@ -87,11 +87,11 @@ th { background:#1e293b; color:var(--accent); }
 <div class="media-box">
 <video id="videoFeed" autoplay playsinline muted style="display:none;"></video>
 <img id="imgPreview" style="display:none;" alt="preview" />
-<canvas id="overlayCanvas"></canvas>
+<canvas id="overlayCanvas" width="320" height="320"></canvas>
 <div id="placeholder" style="display:block;">Awaiting Camera or Upload...<br><span style="font-size:10px;">Camera enables real rPPG · Image = static only</span></div>
 </div>
-<canvas id="signalCanvas" class="sig-preview" style="display:none;"></canvas>
-<img id="passportPreview" class="passport-preview" alt="passport capture" />
+<canvas id="signalCanvas" class="sig-preview" width="320" height="60" style="display:none;"></canvas>
+<img id="passportPreview" class="passport-preview" width="120" height="120" alt="passport capture" />
 <div class="row">
 <button id="btnCam" class="btn btn-sec">📷 Start Camera</button>
 <button id="btnRec" class="btn btn-sec" disabled>⏺️ Record 10s</button>
@@ -319,13 +319,11 @@ class RppgEngine {
     for (let i = 0; i < len; i++) o[i] = s[i] - (slope * i + inter);
     return o;
   }
-
   hannWindow(len) {
     const w = new Float64Array(len);
     for (let i = 0; i < len; i++) w[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (len - 1)));
     return w;
   }
-
   findSpectralPeaks(mag, lo, hi, df) {
     const peaks = [];
     for (let i = lo + 1; i < hi; i++) {
@@ -347,7 +345,6 @@ class RppgEngine {
     peaks.sort((a,b) => b.prominence - a.prominence);
     return peaks;
   }
-
   findPeaks(sig, fps) {
     const p = [], md = Math.floor(fps * 0.35);
     let lp = -md;
@@ -358,7 +355,6 @@ class RppgEngine {
     }
     return p;
   }
-
   calcRMSSD(peaks) {
     if (peaks.length < 3) return 0;
     const iv = [];
@@ -367,7 +363,6 @@ class RppgEngine {
     for (let i = 1; i < iv.length; i++) { const d = iv[i] - iv[i-1]; ss += d * d; }
     return Math.round(Math.sqrt(ss / (iv.length - 1)) * 1000);
   }
-
   envelope(sig, len) {
     const o = new Float64Array(sig.length);
     const w = Math.floor(this.fps * 2);
@@ -378,13 +373,11 @@ class RppgEngine {
     }
     return o;
   }
-
   calcRiseTime(sig, len, fps) {
     let rt = 0, c = 0;
     for (let i = 1; i < len; i++) if (sig[i] > sig[i-1]) { rt += (sig[i] - sig[i-1]); c++; }
     return c > 0 ? rt / c : 0;
   }
-
   spectralEntropy(mag, lo, hi) {
     let e = 0, t = 0;
     for (let i = lo; i <= hi; i++) t += mag[i];
@@ -395,7 +388,6 @@ class RppgEngine {
     }
     return e;
   }
-
   variance(sig, len) {
     let m = 0;
     for (let i = 0; i < len; i++) m += sig[i];
@@ -591,7 +583,7 @@ async function loadFace() {
     faceLoaded = true;
     scanSt.textContent = "Status: Face models loaded. Start camera.";
   } catch (e) {
-    scanSt.innerHTML = '<span class="st-warn">Face models unavailable (CDN blocked). Camera will use fixed forehead ROI.</span>';
+    scanSt.innerHTML = '<span class="st-warn">Face models unavailable. Camera will use fixed forehead ROI.</span>';
     faceLoaded = false;
   }
 }
@@ -600,6 +592,10 @@ loadFace();
 // ========================================================================
 // 9. CAMERA — START / STOP / RESET
 // ========================================================================
+let faceTimer = null;
+let cachedFace = null;
+let cachedRoi = null;
+
 document.getElementById("btnCam").addEventListener("click", async () => {
   // STOP CAMERA
   if (stream) {
@@ -617,6 +613,10 @@ document.getElementById("btnCam").addEventListener("click", async () => {
     document.getElementById("btnRec").disabled = true;
     document.getElementById("btnRec").textContent = "⏺️ Record 10s";
     if (animId) cancelAnimationFrame(animId);
+    if (faceTimer) clearInterval(faceTimer);
+    faceTimer = null;
+    cachedFace = null;
+    cachedRoi = null;
     scanSt.textContent = "Status: Camera stopped.";
     return;
   }
@@ -632,14 +632,17 @@ document.getElementById("btnCam").addEventListener("click", async () => {
     imgP.style.display = "none";
     place.style.display = "none";
     overlay.style.display = "block";
-    overlay.width = 320; overlay.height = 320;
-    sigCan.width = 320; sigCan.height = 60;
     try { await video.play(); } catch (playErr) {}
     document.getElementById("btnCam").textContent = "🛑 Stop Camera";
     document.getElementById("btnRec").disabled = false;
     document.getElementById("btnRec").textContent = "⏺️ Record 10s";
-    scanSt.textContent = "Status: Camera active. " + (faceLoaded ? "Face detection running..." : "Using fixed forehead ROI.");
+    scanSt.textContent = "Status: Camera active. " + (faceLoaded ? "Face detection starting..." : "Using fixed forehead ROI.");
+    // Start render loop (sync, 60fps)
     faceLoop();
+    // Start face detection loop (async, throttled to 200ms)
+    if (faceLoaded) {
+      faceTimer = setInterval(detectFace, 200);
+    }
   } catch (e) {
     scanSt.innerHTML = '<span class="st-err">Camera error: ' + e.message + "</span>";
     alert("Camera error: " + e.message);
@@ -647,42 +650,63 @@ document.getElementById("btnCam").addEventListener("click", async () => {
 });
 
 // ========================================================================
-// 10. FACE LOOP — WITH COVER-ALIGNED SAMPLING
+// 10. FACE DETECTION (async, throttled — runs every 200ms)
 // ========================================================================
-async function faceLoop() {
+async function detectFace() {
+  if (!stream || !faceLoaded) return;
+  const srcW = video.videoWidth || 640;
+  const srcH = video.videoHeight || 480;
+  try {
+    const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks();
+    if (dets.length > 0) {
+      const box = dets[0].detection.box;
+      cachedFace = mapRectToCover(box, srcW, srcH, 320, 320);
+      cachedRoi = {
+        x: cachedFace.x + cachedFace.w * 0.2,
+        y: cachedFace.y + cachedFace.h * 0.05,
+        w: cachedFace.w * 0.6,
+        h: cachedFace.h * 0.3
+      };
+      scanSt.innerHTML = '<span class="st-ok">Face detected. Forehead ROI locked.</span>';
+    } else {
+      cachedFace = null;
+      cachedRoi = null;
+      scanSt.innerHTML = '<span class="st-warn">No face detected. Center face in frame.</span>';
+    }
+  } catch (e) {
+    cachedFace = null;
+    cachedRoi = null;
+    scanSt.innerHTML = '<span class="st-warn">Face detection error. Using fixed ROI.</span>';
+  }
+}
+
+// ========================================================================
+// 11. RENDER LOOP (sync, 60fps — draws video, overlay, samples rPPG)
+// ========================================================================
+function faceLoop() {
   if (!stream) return;
   const srcW = video.videoWidth || 640;
   const srcH = video.videoHeight || 480;
+
+  // Draw video to hidden canvas (cover-mapped)
   hCtx.clearRect(0, 0, 320, 320);
   drawVideoCover(hCtx, video, 320, 320);
+
+  // Clear overlay
   oCtx.clearRect(0, 0, 320, 320);
-  let roi = null;
-  let faceBox = null;
 
-  if (faceLoaded) {
-    try {
-      const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks();
-      if (dets.length > 0) {
-        const box = dets[0].detection.box;
-        const mapped = mapRectToCover(box, srcW, srcH, 320, 320);
-        faceBox = mapped;
-        oCtx.strokeStyle = "#22c55e"; oCtx.lineWidth = 2;
-        oCtx.strokeRect(mapped.x, mapped.y, mapped.w, mapped.h);
-        roi = { x: mapped.x + mapped.w * 0.2, y: mapped.y + mapped.h * 0.05, w: mapped.w * 0.6, h: mapped.h * 0.3 };
-        oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
-        oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
-        oCtx.fillStyle = "#f59e0b"; oCtx.font = "10px monospace";
-        oCtx.fillText("rPPG ROI", roi.x, roi.y - 4);
-        scanSt.innerHTML = '<span class="st-ok">Face detected. Forehead ROI locked. Video: ' + srcW + "x" + srcH + "</span>";
-      } else {
-        scanSt.innerHTML = '<span class="st-warn">No face detected. Center face in frame.</span>';
-      }
-    } catch (e) {
-      scanSt.innerHTML = '<span class="st-warn">Face detection error. Using fixed ROI.</span>';
-    }
-  }
+  // Use cached face or fallback
+  let roi = cachedRoi;
+  let faceBox = cachedFace;
 
-  if (!roi) {
+  if (faceBox) {
+    oCtx.strokeStyle = "#22c55e"; oCtx.lineWidth = 2;
+    oCtx.strokeRect(faceBox.x, faceBox.y, faceBox.w, faceBox.h);
+    oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
+    oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
+    oCtx.fillStyle = "#f59e0b"; oCtx.font = "10px monospace";
+    oCtx.fillText("rPPG ROI", roi.x, roi.y - 4);
+  } else {
     roi = { x: 80, y: 40, w: 160, h: 80 };
     oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
     oCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
@@ -690,19 +714,24 @@ async function faceLoop() {
     oCtx.fillText("Fixed rPPG ROI", roi.x, roi.y - 4);
   }
 
+  // rPPG sampling from hidden canvas
   if (isRec && rppg) {
     const c = rppg.addFrame(roi, hCtx);
     if (!c) finishRec();
     else drawSig();
   }
 
+  // Passport preview (square 120x120) — capture once when face first detected
   if (faceBox && passportPreview.style.display !== "block") {
     try {
-      const pW = 120, pH = 160;
       const pCan = document.createElement("canvas");
-      pCan.width = pW; pCan.height = pH;
+      pCan.width = 120; pCan.height = 120;
       const pCtx = pCan.getContext("2d");
-      pCtx.drawImage(hiddenCanvas, faceBox.x, faceBox.y, faceBox.w, faceBox.h, 0, 0, pW, pH);
+      // Crop square from face center
+      const sq = Math.min(faceBox.w, faceBox.h);
+      const cx = faceBox.x + (faceBox.w - sq) / 2;
+      const cy = faceBox.y + (faceBox.h - sq) / 2;
+      pCtx.drawImage(hiddenCanvas, cx, cy, sq, sq, 0, 0, 120, 120);
       passportPreview.src = pCan.toDataURL("image/jpeg", 0.9);
       passportPreview.style.display = "block";
     } catch (e) {}
@@ -726,7 +755,7 @@ function drawSig() {
 }
 
 // ========================================================================
-// 11. RECORDING
+// 12. RECORDING
 // ========================================================================
 document.getElementById("btnRec").addEventListener("click", () => {
   if (!stream) { alert("Start camera first."); return; }
@@ -760,7 +789,7 @@ function finishRec() {
 }
 
 // ========================================================================
-// 12. IMAGE UPLOAD
+// 13. IMAGE UPLOAD
 // ========================================================================
 document.getElementById("btnUpload").addEventListener("click", () => document.getElementById("fileInput").click());
 document.getElementById("fileInput").addEventListener("change", (e) => {
@@ -769,6 +798,8 @@ document.getElementById("fileInput").addEventListener("change", (e) => {
     if (isRec) { isRec = false; if (rppg) rppg.stop(); rppg = null; }
     stream.getTracks().forEach(t => t.stop()); stream = null;
     if (animId) cancelAnimationFrame(animId);
+    if (faceTimer) clearInterval(faceTimer);
+    faceTimer = null;
     document.getElementById("btnCam").textContent = "📷 Start Camera";
     document.getElementById("btnRec").disabled = true;
     document.getElementById("btnRec").textContent = "⏺️ Record 10s";
@@ -785,7 +816,6 @@ document.getElementById("fileInput").addEventListener("change", (e) => {
     imgP.style.display = "block";
     imgP.onload = () => {
       overlay.style.display = "block";
-      overlay.width = 320; overlay.height = 320;
       oCtx.drawImage(imgP, 0, 0, 320, 320);
       oCtx.strokeStyle = "#f59e0b"; oCtx.lineWidth = 2;
       oCtx.strokeRect(80, 40, 160, 80);
@@ -798,7 +828,7 @@ document.getElementById("fileInput").addEventListener("change", (e) => {
 });
 
 // ========================================================================
-// 13. BLUETOOTH HANDLERS
+// 14. BLUETOOTH HANDLERS
 // ========================================================================
 ble.onData = (name, data) => { Object.assign(bleData, data); updateBleUI(); };
 function updateBleUI() {
@@ -829,7 +859,7 @@ document.getElementById("btnBleOx").addEventListener("click", async () => {
 });
 
 // ========================================================================
-// 14. DICOM UPLOAD
+// 15. DICOM UPLOAD
 // ========================================================================
 document.getElementById("dicomInput").addEventListener("change", async (e) => {
   const f = e.target.files[0]; if (!f) return;
@@ -840,7 +870,7 @@ document.getElementById("dicomInput").addEventListener("change", async (e) => {
 });
 
 // ========================================================================
-// 15. ML BP CALIBRATION
+// 16. ML BP CALIBRATION
 // ========================================================================
 document.getElementById("btnCalMode").addEventListener("click", () => { calPanel.classList.toggle("active"); });
 document.getElementById("btnCalSubmit").addEventListener("click", async () => {
@@ -854,7 +884,7 @@ document.getElementById("btnCalSubmit").addEventListener("click", async () => {
 });
 
 // ========================================================================
-// 16. MEDICAL REPORT PARSER
+// 17. MEDICAL REPORT PARSER
 // ========================================================================
 document.getElementById("reportInput").addEventListener("change", async (e) => {
   const f = e.target.files[0]; if (!f) return;
@@ -867,7 +897,7 @@ document.getElementById("reportInput").addEventListener("change", async (e) => {
 });
 
 // ========================================================================
-// 17. EVALUATION ENGINE
+// 18. EVALUATION ENGINE
 // ========================================================================
 function chakraPct(value, optimal, range) {
   const maxDev = Math.max(optimal - range[0], range[1] - optimal);
@@ -984,7 +1014,7 @@ document.getElementById("btnEval").addEventListener("click", async () => {
 });
 
 // ========================================================================
-// 18. XLSX EXPORT
+// 19. XLSX EXPORT
 // ========================================================================
 document.getElementById("btnXlsx").addEventListener("click", () => {
   if (!currentRows.length) { alert("Run evaluation first."); return; }
